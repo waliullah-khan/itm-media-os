@@ -170,10 +170,9 @@ async function scrapeToCompletion(query, kind, country, limit) {
 
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-const ANALYSIS_TOOL = {
-  name: "record_analysis",
-  description: "Record the structured competitor-ad analysis.",
-  input_schema: {
+const ANALYSIS_SCHEMA = {
+  name: "competitor_ad_analysis",
+  schema: {
     type: "object",
     additionalProperties: false,
     properties: {
@@ -217,22 +216,44 @@ body: ${ad.body?.slice(0, 900) ?? "—"}
 
   const res = await anthropic.messages.create({
     model: ANALYST_MODEL,
-    max_tokens: 4000,
-    tools: [ANALYSIS_TOOL],
-    tool_choice: { type: "tool", name: "record_analysis" },
+    max_tokens: 8000,
+    // Structured outputs (json_schema) — the response is guaranteed to match
+    // the schema, which is more reliable than a forced tool call for a payload
+    // this large (a truncated tool call was serializing `ads` as a string).
+    output_config: {
+      format: { type: "json_schema", schema: ANALYSIS_SCHEMA },
+    },
     system:
-      "You are a direct-response creative strategist at an affiliate marketing company. You reverse-engineer competitor ads: the hook, the persuasion angle, and how to reproduce the mechanics (never the brand assets) for our own offers. An ad running for months is proven. Reproduction prompts get handed straight to the creative team, so be specific and practical.",
+      "You are a direct-response creative strategist at an affiliate marketing company. You reverse-engineer competitor ads: the hook, the persuasion angle, and how to reproduce the mechanics (never the brand assets) for our own offers. An ad running for months is proven. Reproduction prompts get handed straight to the creative team, so be specific and practical. Keep each reproduction prompt to about 4 concise sentences so the full JSON fits.",
     messages: [
       {
         role: "user",
-        content: `Research query: "${query}". Analyze each competitor ad and extract account-level patterns.\n\n${adDescriptions}`,
+        content: `Research query: "${query}". Analyze each competitor ad and extract account-level patterns. Return JSON matching the schema.\n\n${adDescriptions}`,
       },
     ],
   });
 
-  const toolUse = res.content.find((b) => b.type === "tool_use");
-  if (!toolUse) throw new Error("no analysis returned");
-  return toolUse.input;
+  const textBlock = res.content.find((b) => b.type === "text");
+  if (!textBlock) throw new Error("no analysis returned");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(textBlock.text);
+  } catch {
+    throw new Error("analysis was not valid JSON");
+  }
+
+  // Defensive coercion — never let a malformed shape reach the DB / frontend.
+  const analyzedAds = Array.isArray(parsed.ads)
+    ? parsed.ads
+    : typeof parsed.ads === "string"
+      ? JSON.parse(parsed.ads)
+      : [];
+  return {
+    ads: analyzedAds,
+    patterns: Array.isArray(parsed.patterns) ? parsed.patterns : [],
+    recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -277,6 +298,9 @@ async function processOne(item) {
   }
   log(`· ${ads.length} ads scraped, analyzing…`);
   const analysis = await analyze(query, ads);
+  if (!Array.isArray(analysis.ads) || analysis.ads.length === 0) {
+    throw new Error("analysis produced no ad breakdowns — not saving");
+  }
   const research = {
     query,
     kind,
