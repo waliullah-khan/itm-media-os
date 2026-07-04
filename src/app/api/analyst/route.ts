@@ -2,7 +2,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildAnalystContext } from "@/lib/analyst/context";
 import { ANALYST_SYSTEM } from "@/lib/analyst/prompt";
 import { FALLBACK_ANALYSIS } from "@/lib/analyst/fallback";
-import { getConnections, resolveServiceKeys } from "@/lib/connections/store";
+import { resolveServiceKeys } from "@/lib/connections/store";
+import { getEffectiveConnections } from "@/lib/connections/mode";
+import { getWorld } from "@/lib/data/world";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 export const maxDuration = 60;
@@ -22,21 +24,38 @@ export async function POST(req: Request) {
     // no body — defaults are fine
   }
 
-  const connections = await getConnections();
+  const { mode, connections } = await getEffectiveConnections();
   const keys = resolveServiceKeys(connections);
-  const hasLiveAccount = Boolean(
-    connections.meta || connections.google || connections.tiktok || connections.taboola,
-  );
+  const isLive = mode === "live";
+
+  // Live board with no connected accounts → nothing to analyze.
+  if (isLive) {
+    const world = await getWorld();
+    if (world.liveEmpty || world.metrics.length === 0) {
+      return new Response(
+        "No connected-account data to analyze yet. Connect an ad account on the Connections page, or switch to the Seeded demo board.",
+        { status: 409, headers: { "x-analyst-source": "empty" } },
+      );
+    }
+  }
 
   // The process cache only serves the shared seeded world — never a
   // visitor's connected-account analysis.
-  if (cachedAnalysis && !force && !hasLiveAccount) {
+  if (cachedAnalysis && !force && !isLive) {
     return new Response(cachedAnalysis, {
       headers: { "content-type": "text/plain; charset=utf-8", "x-analyst-source": "cached" },
     });
   }
 
+  // Seeded board falls back to the pre-generated analysis when no key is set;
+  // live board requires a key (there's no canned fallback for real accounts).
   if (!keys.anthropic) {
+    if (isLive) {
+      return new Response(
+        "Add an Anthropic key on the Connections page to analyze your live accounts.",
+        { status: 503, headers: { "x-analyst-source": "unavailable" } },
+      );
+    }
     return new Response(FALLBACK_ANALYSIS, {
       headers: { "content-type": "text/plain; charset=utf-8", "x-analyst-source": "fallback" },
     });
@@ -79,7 +98,7 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(delta));
         });
         stream.on("end", () => {
-          if (!hasLiveAccount) cachedAnalysis = full;
+          if (!isLive) cachedAnalysis = full;
           controller.close();
         });
         stream.on("error", (err) => controller.error(err));

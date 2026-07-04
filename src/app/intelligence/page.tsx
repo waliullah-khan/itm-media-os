@@ -14,6 +14,16 @@ interface RunHandle {
   country: string;
 }
 
+interface RecentResearch {
+  runId: string;
+  query: string;
+  kind: QueryKind;
+  country: string;
+  source: string;
+  adsCount: number;
+  createdAt: string;
+}
+
 const RUN_KEY = "mbos-intel-run";
 
 export default function IntelligencePage() {
@@ -23,7 +33,39 @@ export default function IntelligencePage() {
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [recent, setRecent] = useState<RecentResearch[]>([]);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load persisted research history (Supabase). Survives restarts, and the
+  // Railway watchlist worker's runs show up here too.
+  const loadRecent = useCallback(async () => {
+    try {
+      const res = await fetch("/api/intelligence/history");
+      if (res.ok) {
+        const json = await res.json();
+        setRecent(json.recent ?? []);
+      }
+    } catch {
+      // history is a nicety — ignore failures
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRecent();
+  }, [loadRecent]);
+
+  async function openRecent(runId: string) {
+    try {
+      const res = await fetch(`/api/intelligence/history?runId=${encodeURIComponent(runId)}`);
+      if (res.ok) {
+        const json = await res.json();
+        setResearch(json.research as Research);
+        setError(null);
+      }
+    } catch {
+      setError("Couldn't load that saved research.");
+    }
+  }
 
   /**
    * The scrape runs server-side on Apify — the browser only polls for the
@@ -53,6 +95,7 @@ export default function IntelligencePage() {
         setRunning(false);
         setPhase("");
         sessionStorage.removeItem(RUN_KEY);
+        loadRecent();
         return;
       }
       if (json.status === "failed" || (!res.ok && res.status !== 502)) {
@@ -71,7 +114,7 @@ export default function IntelligencePage() {
       // transient network blip — keep polling
       pollTimer.current = setTimeout(() => poll(handle, attempt + 1), 8000);
     }
-  }, []);
+  }, [loadRecent]);
 
   // Resume an in-flight run after a reload.
   useEffect(() => {
@@ -169,7 +212,7 @@ export default function IntelligencePage() {
           <button
             onClick={runLive}
             disabled={running || query.trim().length < 2}
-            className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-40"
+            className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:cursor-default disabled:opacity-40"
           >
             <IconRadar size={15} />
             {running ? "Researching…" : "Run live research"}
@@ -195,6 +238,25 @@ export default function IntelligencePage() {
             </button>
           ))}
         </div>
+
+        {recent.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[12px] text-ink-faint">
+            Recent (saved to Supabase):
+            {recent.map((r) => (
+              <button
+                key={r.runId}
+                onClick={() => openRecent(r.runId)}
+                title={`${r.adsCount} ads · ${new Date(r.createdAt).toLocaleString("en-US")}`}
+                className="flex cursor-pointer items-center gap-1 rounded-full border border-line px-2.5 py-0.5 text-[12px] text-ink-muted transition-colors hover:text-ink"
+              >
+                {r.source === "watchlist" && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" title="watchlist worker" />
+                )}
+                {r.query}
+              </button>
+            ))}
+          </div>
+        )}
 
         {running && (
           <div className="mt-3 flex items-center gap-2 text-[13px] text-ink-muted">

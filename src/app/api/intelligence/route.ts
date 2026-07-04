@@ -1,6 +1,7 @@
 import { startAdLibraryRun } from "@/lib/intelligence/apify";
 import type { QueryKind } from "@/lib/intelligence/types";
-import { getConnections, resolveServiceKeys } from "@/lib/connections/store";
+import { resolveServiceKeys } from "@/lib/connections/store";
+import { getEffectiveConnections } from "@/lib/connections/mode";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 export const maxDuration = 60;
@@ -13,7 +14,7 @@ const MAX_ADS = 8;
  * Apify's side, so closing or backgrounding the tab can't kill it.
  */
 export async function POST(req: Request) {
-  const keys = resolveServiceKeys(await getConnections());
+  const keys = resolveServiceKeys((await getEffectiveConnections()).connections);
   if (!keys.apify || !keys.anthropic) {
     return Response.json(
       {

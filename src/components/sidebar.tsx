@@ -28,14 +28,14 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-56 shrink-0 flex-col border-r border-line bg-surface md:flex">
-      <div className="px-5 pt-6 pb-4">
+    <aside className="sticky top-0 z-10 hidden h-dvh w-56 shrink-0 flex-col border-r border-line bg-surface/80 backdrop-blur md:flex">
+      <div className="px-5 pt-6 pb-5">
         <Link href="/" className="block">
-          <div className="text-[15px] font-semibold tracking-tight">
+          <div className="font-display text-[19px] font-medium leading-none tracking-tight">
             Media Buying <span className="text-primary">OS</span>
           </div>
-          <div className="mt-0.5 text-[11px] text-ink-faint">
-            built for It&apos;s Today Media
+          <div className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em] text-ink-faint">
+            It&apos;s Today Media
           </div>
         </Link>
       </div>
@@ -48,12 +48,18 @@ export function Sidebar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+              className={`group relative flex items-center gap-2.5 rounded-md py-2 pr-2.5 pl-3.5 text-[13px] transition-colors ${
                 active
-                  ? "bg-primary-soft/60 font-medium text-ink"
+                  ? "bg-primary-soft/70 font-medium text-ink"
                   : "text-ink-muted hover:bg-surface-2 hover:text-ink"
               }`}
             >
+              <span
+                className={`absolute left-0 top-1.5 bottom-1.5 w-[2.5px] rounded-full bg-primary transition-opacity ${
+                  active ? "opacity-100" : "opacity-0 group-hover:opacity-30"
+                }`}
+                aria-hidden
+              />
               <Icon size={16} className={active ? "text-primary" : ""} />
               {label}
             </Link>

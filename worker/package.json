@@ -1,0 +1,17 @@
+{
+  "name": "itm-media-os-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Scheduled ad-library watchlist worker for Media Buying OS — runs on Railway, scrapes competitor ads on an interval, analyzes with Claude, and persists to Supabase.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

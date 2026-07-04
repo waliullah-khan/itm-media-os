@@ -1,32 +1,55 @@
 @import "tailwindcss";
 
 @theme {
-  /* Dark data-dense dashboard palette: navy surfaces, blue primary, amber accent */
-  --color-bg: #0a0f1c;
-  --color-surface: #101828;
-  --color-surface-2: #16203a;
-  --color-line: #1e293f;
-  --color-ink: #e6eaf2;
-  --color-ink-muted: #8b98b1;
-  --color-ink-faint: #5b6880;
-  --color-primary: #3b82f6;
-  --color-primary-soft: #1d3a6e;
-  --color-accent: #fbbf24;
-  --color-pos: #34d399;
-  --color-neg: #f87171;
-  --color-warn: #fbbf24;
+  /* Editorial-light palette: warm paper, fountain-pen ink accent, muted
+     semantics tuned for ink-on-paper (not neon-on-dark). One warm gray family. */
+  --color-bg: #f3f0e8;
+  --color-surface: #fbfaf5;
+  --color-surface-2: #eae4d7;
+  --color-line: #dcd4c4;
+  --color-line-strong: #c7bda6;
+  --color-ink: #201c15;
+  --color-ink-muted: #675f50;
+  --color-ink-faint: #978d76;
+  --color-primary: #294b6b;
+  --color-primary-hover: #1f3c56;
+  --color-primary-soft: #dfe4ea;
+  --color-accent: #a8791f;
+  --color-pos: #3f6b4f;
+  --color-neg: #b04a3a;
+  --color-warn: #a8791f;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-newsreader), ui-serif, Georgia, "Times New Roman", serif;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-ink);
+  /* faint warm grain so paper surfaces don't read as sterile flat vector */
+  background-image: radial-gradient(
+    ellipse at 50% -20%,
+    rgba(41, 75, 107, 0.05),
+    transparent 60%
+  );
+  background-attachment: fixed;
+}
+
+/* Fixed noise overlay — breaks digital flatness (skill: grain + noise). */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
 /* numeric alignment in tables/tiles */
@@ -36,15 +59,27 @@ body {
 
 ::selection {
   background: var(--color-primary-soft);
+  color: var(--color-ink);
+}
+
+/* Single, consistent keyboard focus ring across every interactive element —
+   fixes the app-wide missing focus-visible state. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 /* thin scrollbars for data tables */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-line) transparent;
+  scrollbar-color: var(--color-line-strong) transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {

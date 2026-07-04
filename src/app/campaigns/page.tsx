@@ -5,10 +5,25 @@ import {
   windowPair,
 } from "@/lib/data/aggregate";
 import { Badge, PageHeader } from "@/components/ui";
+import { LiveEmptyState } from "@/components/empty";
 import { CampaignTable, type CampaignRow } from "./table";
 
 export default async function CampaignsPage() {
-  const { campaigns, metrics, end } = await getWorld();
+  const { campaigns, metrics, end, liveEmpty, mode } = await getWorld();
+
+  if (liveEmpty) {
+    return (
+      <>
+        <PageHeader
+          title="Campaigns"
+          subtitle="Every campaign across your connected platforms."
+          actions={<Badge tone="neutral">live board</Badge>}
+        />
+        <LiveEmptyState />
+      </>
+    );
+  }
+
   const rows30 = inRange(metrics, windowPair(end, 30).current);
   const rollup = new Map(
     byCampaign(rows30).map((r) => [r.campaignId, r.totals]),
@@ -35,8 +50,8 @@ export default async function CampaignsPage() {
     <>
       <PageHeader
         title="Campaigns"
-        subtitle="Every campaign across all four platforms — last 30 days. Click a row to drill in."
-        actions={<Badge tone="demo">demo dataset</Badge>}
+        subtitle="Every campaign across your platforms — last 30 days. Click a row to drill in."
+        actions={<Badge tone={mode === "live" ? "live" : "demo"}>{mode === "live" ? "live board" : "seeded demo"}</Badge>}
       />
       <CampaignTable rows={rows} />
     </>

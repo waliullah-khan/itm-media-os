@@ -70,9 +70,9 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-line bg-surface">
-      {/* Filter row */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
+    <div>
+      {/* Toolbar — controls only, no enclosing box */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="flex rounded-md border border-line bg-surface-2 p-0.5">
           {(["all", ...PLATFORMS] as const).map((p) => (
             <button
@@ -95,7 +95,7 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
           aria-label="Search campaigns"
           className="min-h-8 w-56 rounded-md border border-line bg-surface-2 px-2.5 text-[13px] placeholder:text-ink-faint focus:border-primary focus:outline-none"
         />
-        <span className="ml-auto text-[12px] text-ink-faint">
+        <span className="tnum ml-auto text-[12px] text-ink-faint">
           {filtered.length} of {rows.length} campaigns
         </span>
       </div>
@@ -103,22 +103,27 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[820px] text-[13px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
-              <th className="px-3 py-2.5 font-medium">Campaign</th>
-              <th className="px-3 py-2.5 font-medium">Vertical</th>
-              <th className="px-3 py-2.5 font-medium">Status</th>
+            <tr className="border-b border-line-strong text-left text-[10.5px] uppercase tracking-[0.07em] text-ink-faint">
+              <th className="px-3 pb-2 font-medium">Campaign</th>
+              <th className="px-3 pb-2 font-medium">Vertical</th>
+              <th className="px-3 pb-2 font-medium">Status</th>
               {COLUMNS.map(({ key, label }) => (
-                <th key={key} className="px-3 py-2.5 text-right font-medium">
+                <th
+                  key={key}
+                  className="px-3 pb-2 text-right font-medium"
+                  aria-sort={
+                    sort === key
+                      ? dir === -1
+                        ? "descending"
+                        : "ascending"
+                      : "none"
+                  }
+                >
                   <button
                     onClick={() => toggleSort(key)}
-                    className="cursor-pointer hover:text-ink"
-                    aria-sort={
-                      sort === key
-                        ? dir === -1
-                          ? "descending"
-                          : "ascending"
-                        : undefined
-                    }
+                    className={`cursor-pointer transition-colors hover:text-ink ${
+                      sort === key ? "text-ink" : ""
+                    }`}
                   >
                     {label}
                     {sort === key ? (dir === -1 ? " ↓" : " ↑") : ""}
@@ -132,7 +137,16 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
               <tr
                 key={r.id}
                 onClick={() => router.push(`/campaigns/${r.id}`)}
-                className="cursor-pointer border-t border-line transition-colors hover:bg-surface-2/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    router.push(`/campaigns/${r.id}`);
+                  }
+                }}
+                tabIndex={0}
+                role="link"
+                aria-label={`Open ${r.name}`}
+                className="cursor-pointer border-b border-line transition-colors hover:bg-surface-2/60 focus-visible:bg-surface-2/60"
               >
                 <td className="px-3 py-2.5">
                   <span className="flex items-center gap-2 font-medium">
@@ -148,20 +162,26 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                     {r.status}
                   </Badge>
                 </td>
-                <td className="tnum px-3 py-2.5 text-right">{fmtUsd(r.spend)}</td>
-                <td className="tnum px-3 py-2.5 text-right">{fmtUsd(r.revenue)}</td>
+                <td className="tnum px-3 py-2.5 text-right font-mono">
+                  {fmtUsd(r.spend)}
+                </td>
+                <td className="tnum px-3 py-2.5 text-right font-mono">
+                  {fmtUsd(r.revenue)}
+                </td>
                 <td
-                  className={`tnum px-3 py-2.5 text-right font-medium ${
+                  className={`tnum px-3 py-2.5 text-right font-mono font-medium ${
                     r.profit >= 0 ? "text-pos" : "text-neg"
                   }`}
                 >
                   {fmtUsd(r.profit)}
                 </td>
-                <td className="tnum px-3 py-2.5 text-right">{fmtRoas(r.roas)}</td>
-                <td className="tnum px-3 py-2.5 text-right">
+                <td className="tnum px-3 py-2.5 text-right font-mono">
+                  {fmtRoas(r.roas)}
+                </td>
+                <td className="tnum px-3 py-2.5 text-right font-mono">
                   {fmtNumCompact(r.conversions)}
                 </td>
-                <td className="tnum px-3 py-2.5 text-right">
+                <td className="tnum px-3 py-2.5 text-right font-mono">
                   {r.cpa === null ? "–" : fmtUsd(r.cpa, true)}
                 </td>
               </tr>

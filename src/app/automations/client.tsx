@@ -269,7 +269,7 @@ function RuleBuilder({ onResult }: { onResult: (a: PendingAction[]) => void }) {
         <button
           onClick={evaluate}
           disabled={running || !isFinite(parseFloat(threshold))}
-          className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
         >
           {running ? "Evaluating…" : "Evaluate"}
         </button>

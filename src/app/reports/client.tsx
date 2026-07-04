@@ -92,7 +92,7 @@ export function ReportsClient({ templates }: { templates: TemplateCard[] }) {
                   <button
                     onClick={() => run(t.id)}
                     disabled={running}
-                    className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 text-[12.5px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                    className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 text-[12.5px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
                   >
                     <IconSparkles size={13} />
                     {running && activeId === t.id ? "Writing…" : "Run"}

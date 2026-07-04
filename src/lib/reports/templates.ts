@@ -12,7 +12,7 @@ export interface ReportTemplate {
   id: string;
   name: string;
   /** which workspace the skill was ported from */
-  source: "EMLM workspace" | "Cadvocates workspace";
+  source: "agency growth workspace" | "ecommerce CRO workspace";
   sourceSkill: string;
   description: string;
   /** scope the data context to one platform */
@@ -34,8 +34,8 @@ export const REPORT_TEMPLATES: ReportTemplate[] = [
   {
     id: "google-ads-performance",
     name: "Google Ads Performance Review",
-    source: "EMLM workspace",
-    sourceSkill: "suji-google-ads-performance",
+    source: "agency growth workspace",
+    sourceSkill: "google-ads-performance",
     description:
       "Analytical Google Ads review — not a data dump. 30-day scorecard, what's working, what's broken with three root-cause hypotheses per underperformer, budget reallocation, and what to watch.",
     platform: "google",
@@ -54,8 +54,8 @@ ${BASE_RULES}`,
   {
     id: "meta-ads-performance",
     name: "Meta Ads Performance Review",
-    source: "EMLM workspace",
-    sourceSkill: "suji-meta-ads-performance",
+    source: "agency growth workspace",
+    sourceSkill: "meta-ads-performance",
     description:
       "Meta account review with a creative lens: 7/30-day scorecards, creative diagnosis (fatigue, format mix), named winners and losers, action plan with $ impact estimates.",
     platform: "meta",
@@ -74,7 +74,7 @@ ${BASE_RULES}`,
   {
     id: "weekly-synthesis",
     name: "Weekly Learning Synthesis",
-    source: "Cadvocates workspace",
+    source: "ecommerce CRO workspace",
     sourceSkill: "weekly-synthesis",
     description:
       "The weekly internal retro: scores each outcome (win / loss / inconclusive), extracts durable learnings from one-week noise, and produces a prioritized learnings ledger with what to test next.",
@@ -93,7 +93,7 @@ ${BASE_RULES}`,
   {
     id: "cross-platform-insights",
     name: "Cross-Platform Insights",
-    source: "Cadvocates workspace",
+    source: "ecommerce CRO workspace",
     sourceSkill: "cross-platform-insights",
     description:
       "Transfers learnings ACROSS channels: a winning angle on one platform becomes a test on another; a failing vertical gets cross-checked everywhere it runs. Ranked recommendations tagged source → target.",
@@ -111,7 +111,7 @@ ${BASE_RULES}`,
   {
     id: "blended-ad-performance",
     name: "Blended Media-Buyer View",
-    source: "Cadvocates workspace",
+    source: "ecommerce CRO workspace",
     sourceSkill: "ad-performance",
     description:
       "The cross-channel efficiency view: blended ROAS/CPA, spend share vs profit share by platform, efficiency trend, and where the next dollar should go.",
@@ -129,7 +129,7 @@ ${BASE_RULES}`,
   {
     id: "profit-analytics",
     name: "Profit Analytics (CFO View)",
-    source: "Cadvocates workspace",
+    source: "ecommerce CRO workspace",
     sourceSkill: "profit-analytics",
     description:
       "Unit economics over vanity metrics: margin by vertical, profit traps (volume up, per-lead economics down), margin erosion over time, and the cost of the tail.",
@@ -147,7 +147,7 @@ ${BASE_RULES}`,
   {
     id: "ab-test-ideas",
     name: "Test Ideas Backlog (ICE-scored)",
-    source: "Cadvocates workspace",
+    source: "ecommerce CRO workspace",
     sourceSkill: "ab-test-ideas",
     description:
       "A prioritized backlog of test hypotheses mined from the account's own data — budget, creative, dayparting, and landing tests — each ICE-scored with the evidence that seeded it.",
@@ -166,8 +166,8 @@ ${BASE_RULES}`,
   {
     id: "creative-brief",
     name: "Creative Brief Builder",
-    source: "EMLM workspace",
-    sourceSkill: "suji-brief-builder",
+    source: "agency growth workspace",
+    sourceSkill: "brief-builder",
     description:
       "A production-ready creative brief for the account's biggest creative opportunity: UGC and static concepts with hooks, scripts, shot lists, and success metrics — grounded in what's already winning.",
     includeAds: true,
@@ -186,8 +186,8 @@ ${BASE_RULES}`,
   {
     id: "weekly-paid-report",
     name: "Weekly Paid Report (client-facing)",
-    source: "EMLM workspace",
-    sourceSkill: "suji-weekly-paid-report-doc",
+    source: "agency growth workspace",
+    sourceSkill: "weekly-paid-report",
     description:
       "The structured 'Week of …' section a client receives: per-platform last-7 vs prior-7 and 30-day context, wins, concerns, and next week's plan — professional tone, no jargon.",
     system: `${PERSONA} Write the client-facing weekly report section. Professional, plain-English, no internal jargon — the client is smart but doesn't live in ads managers.

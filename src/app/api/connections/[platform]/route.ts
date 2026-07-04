@@ -7,6 +7,7 @@ import {
   getConnections,
   type Connections,
 } from "@/lib/connections/store";
+import { getMode } from "@/lib/connections/mode";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 /**
@@ -109,6 +110,13 @@ export async function POST(
   const { platform } = await ctx.params;
   if (!isPlatform(platform)) {
     return Response.json({ error: "Unknown platform" }, { status: 404 });
+  }
+
+  if ((await getMode()) === "seeded") {
+    return Response.json(
+      { error: "Switch to the Live board (top toggle) to connect accounts." },
+      { status: 409 },
+    );
   }
 
   const limit = rateLimit(`connect:${clientKey(req)}`, { capacity: 6, refillPerMinute: 1 });

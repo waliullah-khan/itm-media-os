@@ -8,7 +8,14 @@ import {
 } from "@/lib/data/aggregate";
 import { PLATFORM_LABELS, VERTICAL_LABELS } from "@/lib/adapters/types";
 import { TrendChart } from "@/components/charts";
-import { Badge, Card, PageHeader, PlatformDot, StatTile } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  PageHeader,
+  PlatformDot,
+  Scorecard,
+  StatTile,
+} from "@/components/ui";
 import { IconAlert } from "@/components/icons";
 import {
   delta,
@@ -81,7 +88,7 @@ export default async function CampaignDetail({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <Scorecard className="lg:grid-cols-6">
         <StatTile
           label="Spend (30d)"
           value={fmtUsdCompact(cur.spend)}
@@ -118,20 +125,24 @@ export default async function CampaignDetail({
           value={fmtPct(cur.cvr, 1)}
           deltaValue={delta(cur.cvr, prev.cvr)}
         />
-      </div>
+      </Scorecard>
 
       <Card title="Spend vs revenue — 90 days" className="mt-4">
         <TrendChart data={series} />
       </Card>
 
-      <Card title="Ads — dataset lifetime" className="mt-4">
+      {/* Ads — full-width ruled ledger, no card box */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+          Ads — dataset lifetime
+        </h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-[13px]">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
-                <th className="pb-2 font-medium">Ad</th>
-                <th className="pb-2 font-medium">Format</th>
-                <th className="pb-2 font-medium">Hook</th>
+              <tr className="border-b border-line-strong text-left text-[10.5px] uppercase tracking-[0.07em] text-ink-faint">
+                <th className="pb-2 pr-3 font-medium">Ad</th>
+                <th className="pb-2 pr-3 font-medium">Format</th>
+                <th className="pb-2 pr-3 font-medium">Hook</th>
                 <th className="pb-2 text-right font-medium">Spend</th>
                 <th className="pb-2 text-right font-medium">Leads</th>
                 <th className="pb-2 text-right font-medium">CTR</th>
@@ -143,7 +154,7 @@ export default async function CampaignDetail({
                 const ctr = ad.impressions > 0 ? ad.clicks / ad.impressions : 0;
                 const roas = ad.spend > 0 ? ad.revenue / ad.spend : 0;
                 return (
-                  <tr key={ad.id} className="border-t border-line">
+                  <tr key={ad.id} className="border-b border-line">
                     <td className="py-2.5 pr-3">
                       <div className="font-medium">{ad.name}</div>
                       <div className="text-[12px] text-ink-faint">
@@ -156,13 +167,17 @@ export default async function CampaignDetail({
                     <td className="max-w-64 py-2.5 pr-3 text-[12px] text-ink-muted">
                       {ad.hook}
                     </td>
-                    <td className="tnum py-2.5 text-right">{fmtUsd(ad.spend)}</td>
-                    <td className="tnum py-2.5 text-right">
+                    <td className="tnum py-2.5 text-right font-mono">
+                      {fmtUsd(ad.spend)}
+                    </td>
+                    <td className="tnum py-2.5 text-right font-mono">
                       {fmtNumCompact(ad.conversions)}
                     </td>
-                    <td className="tnum py-2.5 text-right">{fmtPct(ctr, 2)}</td>
+                    <td className="tnum py-2.5 text-right font-mono">
+                      {fmtPct(ctr, 2)}
+                    </td>
                     <td
-                      className={`tnum py-2.5 text-right font-medium ${
+                      className={`tnum py-2.5 text-right font-mono font-medium ${
                         roas >= 1 ? "text-pos" : "text-neg"
                       }`}
                     >
@@ -174,7 +189,7 @@ export default async function CampaignDetail({
             </tbody>
           </table>
         </div>
-      </Card>
+      </section>
     </>
   );
 }

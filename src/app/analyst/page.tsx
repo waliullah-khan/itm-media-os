@@ -101,7 +101,7 @@ export default function AnalystPage() {
             </div>
             <button
               onClick={() => run(false)}
-              className="min-h-10 cursor-pointer rounded-md bg-primary px-5 text-[13.5px] font-medium text-white transition-opacity hover:opacity-90"
+              className="min-h-10 cursor-pointer rounded-md bg-primary px-5 text-[13.5px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px"
             >
               Run weekly review
             </button>

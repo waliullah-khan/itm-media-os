@@ -2,7 +2,9 @@ import { fetchRunItems, getRunStatus } from "@/lib/intelligence/apify";
 import { scrapeLandingPage } from "@/lib/intelligence/firecrawl";
 import { analyzeAds } from "@/lib/intelligence/analyze";
 import type { QueryKind, Research } from "@/lib/intelligence/types";
-import { getConnections, resolveServiceKeys } from "@/lib/connections/store";
+import { resolveServiceKeys } from "@/lib/connections/store";
+import { getEffectiveConnections } from "@/lib/connections/mode";
+import { getResearchByRunId, saveResearch } from "@/lib/supabase";
 
 /** Analysis of a finished scrape can take ~1 min of Claude time. */
 export const maxDuration = 300;
@@ -22,10 +24,12 @@ export async function GET(req: Request) {
     return Response.json({ error: "Invalid run handle" }, { status: 400 });
   }
 
-  const done = completed.get(runId);
+  // finished already? — check this instance's memory, then Supabase (another
+  // serverless instance may have completed the analysis)
+  const done = completed.get(runId) ?? (await getResearchByRunId(runId));
   if (done) return Response.json({ status: "done", research: done });
 
-  const keys = resolveServiceKeys(await getConnections());
+  const keys = resolveServiceKeys((await getEffectiveConnections()).connections);
   if (!keys.apify || !keys.anthropic) {
     return Response.json({ error: "Keys no longer available" }, { status: 503 });
   }
@@ -72,6 +76,7 @@ export async function GET(req: Request) {
       landingPageNotes: analysis.landingPageNotes,
     };
     completed.set(runId, research);
+    await saveResearch(runId, research);
     return Response.json({ status: "done", research });
   } catch (err) {
     console.error("intelligence status/analysis failed:", err);

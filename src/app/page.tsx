@@ -11,8 +11,16 @@ import {
 } from "@/lib/data/aggregate";
 import { PLATFORM_LABELS, type Platform } from "@/lib/adapters/types";
 import { TrendChart } from "@/components/charts";
-import { Badge, Card, PageHeader, PlatformDot, StatTile } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  PageHeader,
+  PlatformDot,
+  Scorecard,
+  StatTile,
+} from "@/components/ui";
 import { IconAlert } from "@/components/icons";
+import { LiveEmptyState } from "@/components/empty";
 import {
   delta,
   fmtNumCompact,
@@ -23,7 +31,20 @@ import {
 
 export default async function CommandCenter() {
   const world = await getWorld();
-  const { campaigns, metrics, end, livePlatforms } = world;
+  const { campaigns, metrics, end, livePlatforms, liveEmpty } = world;
+
+  if (liveEmpty) {
+    return (
+      <>
+        <PageHeader
+          title="Command Center"
+          subtitle="Cross-platform view of all paid delivery."
+          actions={<Badge tone="neutral">live board</Badge>}
+        />
+        <LiveEmptyState />
+      </>
+    );
+  }
 
   const sc = scorecard(metrics, end, 30);
   const cur = sc.current;
@@ -48,15 +69,17 @@ export default async function CommandCenter() {
         subtitle={`Cross-platform view of all paid delivery. Last 30 days vs the 30 before, data through ${end}.`}
         actions={
           livePlatforms.length > 0 ? (
-            <Badge tone="live">{livePlatforms.join(", ")} live · rest demo</Badge>
+            <Badge tone="live">
+              live · {livePlatforms.map((p) => PLATFORM_LABELS[p]).join(", ")}
+            </Badge>
           ) : (
-            <Badge tone="demo">demo dataset</Badge>
+            <Badge tone="demo">seeded demo</Badge>
           )
         }
       />
 
       {/* Scorecards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <Scorecard className="lg:grid-cols-6">
         <StatTile
           label="Spend"
           value={fmtUsdCompact(cur.spend)}
@@ -89,7 +112,7 @@ export default async function CommandCenter() {
           deltaValue={delta(cur.cpa, prev.cpa)}
           goodWhenUp={false}
         />
-      </div>
+      </Scorecard>
 
       {/* Trend + anomalies */}
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
@@ -131,13 +154,16 @@ export default async function CommandCenter() {
         </Card>
       </div>
 
-      {/* Platform breakdown */}
-      <Card title="Platform breakdown — last 30 days" className="mt-4">
+      {/* Platform breakdown — full-width ruled ledger, no card box */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+          Platform breakdown — last 30 days
+        </h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-[13px]">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
-                <th className="pb-2 font-medium">Platform</th>
+              <tr className="border-b border-line-strong text-left text-[10.5px] uppercase tracking-[0.07em] text-ink-faint">
+                <th className="pb-2 pr-3 font-medium">Platform</th>
                 <th className="pb-2 text-right font-medium">Spend</th>
                 <th className="pb-2 text-right font-medium">Revenue</th>
                 <th className="pb-2 text-right font-medium">Profit</th>
@@ -149,31 +175,39 @@ export default async function CommandCenter() {
             </thead>
             <tbody>
               {platforms.map(({ platform, totals }) => (
-                <tr key={platform} className="border-t border-line">
-                  <td className="py-2.5">
+                <tr key={platform} className="border-b border-line">
+                  <td className="py-2.5 pr-3">
                     <span className="flex items-center gap-2 font-medium">
                       <PlatformDot platform={platform} />
                       {PLATFORM_LABELS[platform as Platform]}
                     </span>
                   </td>
-                  <td className="tnum py-2.5 text-right">{fmtUsd(totals.spend)}</td>
-                  <td className="tnum py-2.5 text-right">{fmtUsd(totals.revenue)}</td>
+                  <td className="tnum py-2.5 text-right font-mono">
+                    {fmtUsd(totals.spend)}
+                  </td>
+                  <td className="tnum py-2.5 text-right font-mono">
+                    {fmtUsd(totals.revenue)}
+                  </td>
                   <td
-                    className={`tnum py-2.5 text-right font-medium ${
+                    className={`tnum py-2.5 text-right font-mono font-medium ${
                       totals.profit >= 0 ? "text-pos" : "text-neg"
                     }`}
                   >
                     {fmtUsd(totals.profit)}
                   </td>
-                  <td className="tnum py-2.5 text-right">{fmtRoas(totals.roas)}</td>
-                  <td className="tnum py-2.5 text-right">
+                  <td className="tnum py-2.5 text-right font-mono">
+                    {fmtRoas(totals.roas)}
+                  </td>
+                  <td className="tnum py-2.5 text-right font-mono">
                     {fmtNumCompact(totals.conversions)}
                   </td>
-                  <td className="tnum py-2.5 text-right">{fmtUsd(totals.cpa, true)}</td>
+                  <td className="tnum py-2.5 text-right font-mono">
+                    {fmtUsd(totals.cpa, true)}
+                  </td>
                   <td className="py-2.5 pl-6">
-                    <div className="h-1.5 w-full max-w-40 rounded-full bg-surface-2">
+                    <div className="h-1 w-full max-w-40 rounded-[1px] bg-surface-2">
                       <div
-                        className="h-1.5 rounded-full"
+                        className="h-1 rounded-[1px]"
                         style={{
                           width: `${(totals.spend / cur.spend) * 100}%`,
                           background: "var(--color-primary)",
@@ -186,7 +220,7 @@ export default async function CommandCenter() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </section>
 
       {/* Top / bottom campaigns */}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">

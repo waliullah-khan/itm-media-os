@@ -107,7 +107,7 @@ export function PlatformConnect({
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+          className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px"
         >
           Connect {label} account
         </button>
@@ -133,7 +133,7 @@ export function PlatformConnect({
             <button
               onClick={connect}
               disabled={busy || !requiredFilled}
-              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
             >
               {busy ? `Validating with ${label}…` : "Connect"}
             </button>
@@ -221,7 +221,7 @@ export function ServiceKeysForm({ hasVisitorKeys }: { hasVisitorKeys: boolean })
           ) : (
             <button
               onClick={() => setOpen(!open)}
-              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px"
             >
               {open ? "Close" : "Add my keys"}
             </button>
@@ -260,7 +260,7 @@ export function ServiceKeysForm({ hasVisitorKeys }: { hasVisitorKeys: boolean })
             <button
               onClick={save}
               disabled={busy || (!anthropicKey && !apifyToken && !firecrawlKey)}
-              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="min-h-9 cursor-pointer rounded-md bg-primary px-4 text-[13px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
             >
               {busy ? "Validating…" : "Validate & save"}
             </button>

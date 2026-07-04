@@ -14,10 +14,10 @@ import {
 import type { SeriesPoint } from "@/lib/data/aggregate";
 import { fmtUsdCompact } from "@/lib/format";
 
-const INK_MUTED = "#8b98b1";
-const GRID = "#1e293f";
-const SPEND = "#4c8df6";
-const REVENUE = "#0da678";
+const INK_MUTED = "#8a8069";
+const GRID = "#dcd4c4";
+const SPEND = "#294b6b";
+const REVENUE = "#3f6b4f";
 
 function fmtAxisDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00Z`);

@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getTemplate } from "@/lib/reports/templates";
 import { buildReportContext } from "@/lib/reports/context";
-import { getConnections, resolveServiceKeys } from "@/lib/connections/store";
+import { resolveServiceKeys } from "@/lib/connections/store";
+import { getEffectiveConnections } from "@/lib/connections/mode";
+import { getWorld } from "@/lib/data/world";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 export const maxDuration = 120;
@@ -20,7 +22,19 @@ export async function POST(req: Request) {
   const template = getTemplate(templateId);
   if (!template) return new Response("Unknown report template", { status: 404 });
 
-  const keys = resolveServiceKeys(await getConnections());
+  const { mode, connections } = await getEffectiveConnections();
+  const keys = resolveServiceKeys(connections);
+
+  if (mode === "live") {
+    const world = await getWorld();
+    if (world.liveEmpty || world.metrics.length === 0) {
+      return new Response(
+        "No connected-account data to report on yet. Connect an ad account, or switch to the Seeded demo board.",
+        { status: 409, headers: { "x-report-source": "empty" } },
+      );
+    }
+  }
+
   if (!keys.anthropic) {
     return new Response(
       "Report generation needs an Anthropic key — add yours on the Connections page (stored only in your encrypted cookie).",

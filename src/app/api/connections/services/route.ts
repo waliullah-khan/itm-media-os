@@ -3,6 +3,7 @@ import {
   getConnections,
   type ServiceKeys,
 } from "@/lib/connections/store";
+import { getMode } from "@/lib/connections/mode";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 /**
@@ -39,6 +40,13 @@ async function validateFirecrawl(key: string): Promise<void> {
 }
 
 export async function POST(req: Request) {
+  if ((await getMode()) === "seeded") {
+    return Response.json(
+      { error: "Switch to the Live board (top toggle) to add your own keys." },
+      { status: 409 },
+    );
+  }
+
   const limit = rateLimit(`svc:${clientKey(req)}`, { capacity: 6, refillPerMinute: 2 });
   if (!limit.ok) {
     return Response.json({ error: "Rate limited — try again shortly." }, { status: 429 });

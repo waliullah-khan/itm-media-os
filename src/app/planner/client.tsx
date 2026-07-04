@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { allocate, type CampaignCurve } from "@/lib/planner/allocate";
 import { PLATFORM_LABELS } from "@/lib/adapters/types";
-import { Card, PlatformDot, StatTile } from "@/components/ui";
+import { Card, PlatformDot, Scorecard, StatTile } from "@/components/ui";
 import { fmtRoas, fmtUsd, fmtUsdCompact, fmtNumCompact, delta } from "@/lib/format";
 
 export function PlannerClient({
@@ -52,7 +52,7 @@ export function PlannerClient({
       </Card>
 
       {/* Projections */}
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <Scorecard className="mb-4 lg:grid-cols-4">
         <StatTile
           label="Projected daily revenue"
           value={fmtUsdCompact(plan.projRevenue)}
@@ -74,7 +74,7 @@ export function PlannerClient({
           value={fmtRoas(plan.projRevenue / Math.max(plan.totalBudget, 1))}
           hint="diminishing returns priced in"
         />
-      </div>
+      </Scorecard>
 
       {/* Allocation table */}
       <Card title="Recommended allocation — dollars follow marginal ROAS">

@@ -8,7 +8,7 @@
 1. A live Vercel URL a judge can click and use with zero setup.
 2. Demonstrates real media-buying value: cross-platform reporting, AI analysis, competitor ad intelligence, safe automations, budget planning.
 3. Code another engineer could extend: clean adapter architecture, typed data model, tests on the real logic.
-4. Zero leakage of prior client work (EMLM/Cadvocates data, credentials, reports).
+4. Zero leakage of prior client work (prior client-workspace data, credentials, reports).
 
 ## Non-goals
 

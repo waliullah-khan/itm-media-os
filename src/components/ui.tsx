@@ -12,14 +12,20 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        {subtitle && (
-          <p className="mt-1 max-w-2xl text-[13px] text-ink-muted">{subtitle}</p>
-        )}
+    <div className="mb-6 border-b border-line pb-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[26px] font-medium leading-[1.1] tracking-tight text-balance">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-muted text-pretty">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -37,12 +43,14 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-line bg-surface p-4 ${className}`}
+      className={`rounded-lg border border-line bg-surface p-5 ${className}`}
     >
       {(title || right) && (
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-4 flex items-center justify-between gap-2 border-b border-line pb-2.5">
           {title && (
-            <h2 className="text-[13px] font-medium text-ink-muted">{title}</h2>
+            <h2 className="text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+              {title}
+            </h2>
           )}
           {right}
         </div>
@@ -122,17 +130,41 @@ export function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border border-line bg-surface px-4 py-3">
+    <div className="bg-surface px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[12px] text-ink-muted">{label}</span>
+        <span className="text-[10.5px] font-medium uppercase tracking-[0.07em] text-ink-faint">
+          {label}
+        </span>
         {deltaValue !== undefined && (
           <DeltaChip value={deltaValue} goodWhenUp={goodWhenUp} />
         )}
       </div>
-      <div className="tnum mt-1 text-xl font-semibold tracking-tight">
+      <div className="tnum mt-2 font-mono text-[25px] font-medium leading-none tracking-tight text-ink">
         {value}
       </div>
-      {hint && <div className="mt-0.5 text-[11px] text-ink-faint">{hint}</div>}
+      {hint && <div className="mt-1.5 text-[11px] leading-snug text-ink-faint">{hint}</div>}
+    </div>
+  );
+}
+
+/**
+ * Ruled metric rail. Cells sit on a hairline grid (gap-px over a line-colored
+ * backing) instead of each metric floating in its own bordered card box — the
+ * generic-dashboard tell. Pass the desktop column count via className, e.g.
+ * `lg:grid-cols-6`.
+ */
+export function Scorecard({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line ${className}`}
+    >
+      {children}
     </div>
   );
 }
@@ -140,17 +172,17 @@ export function StatTile({
 /** Categorical series colors — validated for CVD separation + contrast on the
  * dark surface (dataviz six-checks). Fixed assignment; never cycled. */
 export const PLATFORM_COLORS: Record<string, string> = {
-  google: "#4c8df6",
-  meta: "#0da678",
-  taboola: "#cc820a",
-  tiktok: "#ec4899",
+  google: "#2f5a7a",
+  meta: "#2e7d5b",
+  taboola: "#a8791f",
+  tiktok: "#b5476f",
 };
 
 export function PlatformDot({ platform }: { platform: string }) {
   return (
     <span
       className="inline-block h-2 w-2 rounded-full"
-      style={{ background: PLATFORM_COLORS[platform] ?? "#8b98b1" }}
+      style={{ background: PLATFORM_COLORS[platform] ?? "#978d76" }}
       aria-hidden
     />
   );
