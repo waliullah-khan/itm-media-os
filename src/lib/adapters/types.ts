@@ -18,18 +18,24 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   tiktok: "TikTok",
 };
 
-export type Vertical = "home-services" | "insurance" | "health" | "finance";
+export type Vertical =
+  | "home-services"
+  | "insurance"
+  | "health"
+  | "finance"
+  | "other";
 
 export const VERTICAL_LABELS: Record<Vertical, string> = {
   "home-services": "Home Services",
   insurance: "Insurance",
   health: "Health",
   finance: "Finance",
+  other: "Other",
 };
 
 export type CampaignStatus = "active" | "paused";
 
-export type AdFormat = "image" | "video" | "native" | "search";
+export type AdFormat = "image" | "video" | "native" | "search" | "unknown";
 
 export interface Campaign {
   id: string;

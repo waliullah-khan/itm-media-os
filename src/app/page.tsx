@@ -23,7 +23,7 @@ import {
 
 export default async function CommandCenter() {
   const world = await getWorld();
-  const { campaigns, metrics, end } = world;
+  const { campaigns, metrics, end, livePlatforms } = world;
 
   const sc = scorecard(metrics, end, 30);
   const cur = sc.current;
@@ -46,7 +46,13 @@ export default async function CommandCenter() {
       <PageHeader
         title="Command Center"
         subtitle={`Cross-platform view of all paid delivery. Last 30 days vs the 30 before, data through ${end}.`}
-        actions={<Badge tone="demo">demo dataset</Badge>}
+        actions={
+          livePlatforms.length > 0 ? (
+            <Badge tone="live">{livePlatforms.join(", ")} live · rest demo</Badge>
+          ) : (
+            <Badge tone="demo">demo dataset</Badge>
+          )
+        }
       />
 
       {/* Scorecards */}

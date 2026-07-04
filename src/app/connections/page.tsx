@@ -1,22 +1,32 @@
 import { PLATFORM_LABELS, PLATFORMS } from "@/lib/adapters/types";
-import { getAdapter } from "@/lib/adapters/registry";
+import { getConnections } from "@/lib/connections/store";
 import { Badge, Card, PageHeader, PlatformDot } from "@/components/ui";
-
-/** What a live integration for each seeded platform requires — the honest
- * production checklist, not vaporware. */
-const PLATFORM_LIVE_NOTES: Record<string, string> = {
-  google:
-    "OAuth2 + developer token via the Google Ads API; GAQL queries land in the adapter's getDailyMetrics/getCampaigns.",
-  meta:
-    "Marketing API system-user token; insights endpoint with per-day breakdown maps 1:1 onto the adapter interface.",
-  taboola:
-    "Backstage API client-credentials token; campaign-summary reports feed the same DailyMetric shape.",
-  tiktok:
-    "Marketing API access token; the reporting endpoint's daily metrics normalize into the adapter in ~50 lines.",
-};
+import { MetaConnect } from "./meta-connect";
 
 /** Badges must reflect the runtime environment, not build-time env capture. */
 export const dynamic = "force-dynamic";
+
+/** What a live integration for each platform requires. Meta is connectable
+ * today (simple token auth); the others need provisioned OAuth apps or
+ * developer tokens, so their adapters are the documented next step. */
+const PLATFORM_NOTES: Record<string, { note: string; connect: "live" | "planned" }> = {
+  google: {
+    note: "Needs a Google Ads API developer token + OAuth2 app approval. GAQL queries slot into the adapter's getDailyMetrics/getCampaigns.",
+    connect: "planned",
+  },
+  meta: {
+    note: "Marketing API with token auth — connect a real ad account below and every module reads its actual last-90-day delivery through the live adapter.",
+    connect: "live",
+  },
+  taboola: {
+    note: "Backstage API client-credentials pair (issued by your account manager). Campaign-summary reports map onto the same DailyMetric shape.",
+    connect: "planned",
+  },
+  tiktok: {
+    note: "Marketing API app + access token. The reporting endpoint's daily metrics normalize into the adapter in ~50 lines.",
+    connect: "planned",
+  },
+};
 
 const SERVICES = [
   {
@@ -42,17 +52,20 @@ const SERVICES = [
 ];
 
 export default async function ConnectionsPage() {
+  const connections = await getConnections();
+
   return (
     <>
       <PageHeader
         title="Connections"
-        subtitle="Every ad platform is served through one PlatformAdapter interface. The four platforms below run on the seeded demo adapter; swapping any of them for a live API client changes zero lines of dashboard, analyst, automation, or planner code."
+        subtitle="Every ad platform is served through one PlatformAdapter interface. Platforms run on seeded demo data until you connect a real account — connecting swaps in a live API adapter and changes zero lines of dashboard, analyst, automation, or planner code."
       />
 
       <h2 className="mb-3 text-[13px] font-medium text-ink-muted">Ad platforms — adapter layer</h2>
       <div className="grid gap-4 md:grid-cols-2">
         {PLATFORMS.map((p) => {
-          const adapter = getAdapter(p);
+          const cfg = PLATFORM_NOTES[p];
+          const metaConnected = p === "meta" && connections.meta;
           return (
             <Card key={p}>
               <div className="flex items-center justify-between">
@@ -60,14 +73,42 @@ export default async function ConnectionsPage() {
                   <PlatformDot platform={p} />
                   {PLATFORM_LABELS[p]}
                 </span>
-                <Badge tone="demo">seeded demo data</Badge>
+                {metaConnected ? (
+                  <Badge tone="live">live account connected</Badge>
+                ) : (
+                  <Badge tone="demo">seeded demo data</Badge>
+                )}
               </div>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-muted">
-                {PLATFORM_LIVE_NOTES[p]}
-              </p>
-              <p className="mt-2 text-[11.5px] text-ink-faint">
-                adapter: <code className="rounded bg-surface-2 px-1 py-0.5">src/lib/adapters/seeded.ts</code>{" "}
-                · mode: <code className="rounded bg-surface-2 px-1 py-0.5">{adapter.mode}</code>
+              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-muted">{cfg.note}</p>
+
+              {p === "meta" ? (
+                <MetaConnect
+                  connected={
+                    connections.meta
+                      ? {
+                          accountName: connections.meta.accountName,
+                          accountId: connections.meta.accountId,
+                        }
+                      : null
+                  }
+                />
+              ) : (
+                <div className="mt-3">
+                  <button
+                    disabled
+                    title="Requires a provisioned developer app — the next adapter to build"
+                    className="min-h-9 rounded-md border border-line bg-surface-2 px-4 text-[13px] text-ink-faint"
+                  >
+                    Connect — adapter planned
+                  </button>
+                </div>
+              )}
+
+              <p className="mt-2.5 text-[11.5px] text-ink-faint">
+                adapter:{" "}
+                <code className="rounded bg-surface-2 px-1 py-0.5">
+                  {p === "meta" ? "src/lib/adapters/meta-live.ts + seeded.ts" : "src/lib/adapters/seeded.ts"}
+                </code>
               </p>
             </Card>
           );

@@ -59,7 +59,7 @@ interface CampaignSpec {
   id: string;
   platform: Platform;
   name: string;
-  vertical: Vertical;
+  vertical: Exclude<Vertical, "other">;
   objective: string;
   status: CampaignStatus;
   /** average daily spend at steady state, USD */
@@ -516,7 +516,7 @@ const SPECS: CampaignSpec[] = [
 // Ad creative pools (per vertical) for ad-level rows
 // ---------------------------------------------------------------------------
 
-const HOOKS: Record<Vertical, string[]> = {
+const HOOKS: Record<Exclude<Vertical, "other">, string[]> = {
   "home-services": [
     "Homeowners are switching in droves — here's why",
     "The $1 trick contractors don't want you to know",
@@ -543,7 +543,7 @@ const HOOKS: Record<Vertical, string[]> = {
   ],
 };
 
-const HEADLINES: Record<Vertical, string[]> = {
+const HEADLINES: Record<Exclude<Vertical, "other">, string[]> = {
   "home-services": [
     "Get a Free Quote in 60 Seconds",
     "Compare Local Pros Instantly",
