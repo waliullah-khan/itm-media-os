@@ -40,13 +40,14 @@ export async function analyzeAds(
   query: string,
   ads: ScrapedAd[],
   landingPageMarkdown: string | null,
+  apiKey?: string,
 ): Promise<{
   analyses: AdAnalysis[];
   patterns: string[];
   recommendations: string[];
   landingPageNotes: string | null;
 }> {
-  const client = new Anthropic();
+  const client = new Anthropic(apiKey ? { apiKey } : undefined);
 
   const adDescriptions = ads
     .map(

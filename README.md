@@ -18,21 +18,27 @@ Built for the It's Today Media build contest.
 
 **Media Planner** (`/planner`) — every campaign gets a diminishing-returns curve fit on its trailing 14 days; drag one slider and the total budget re-allocates by *marginal* ROAS with projected revenue, profit, and leads. Answers the question a budget meeting actually asks: "if we had $2K/day more (or less), where does it go?"
 
-**Connections** (`/connections`) — the honest architecture page: which data is seeded demo data, which services are live (Anthropic, Apify, Firecrawl, cron), and what a production integration of each ad platform needs.
+**Reports** (`/reports`) — a library of nine one-click reports ported from the Claude Code skill systems I built for two real client workspaces (an agency growth system and an ecommerce CRO system): Google/Meta performance reviews with root-cause hypotheses, weekly learning synthesis, cross-platform insight transfer, a CFO-view profit report, an ICE-scored test backlog, a production-ready creative brief builder, and a client-facing weekly report. Each runs its source skill's analytical structure against the account data and streams back a working document — analyst output, not chatbot output.
+
+**Connections** (`/connections`) — connect real accounts on **all four platforms** (Meta, Google Ads, TikTok, Taboola): credentials are validated against each platform's API, stored only in your encrypted httpOnly cookie (AES-256-GCM, never server-side), and a live adapter replaces the seeded one — every module then reads your real delivery. You can also bring your own Anthropic/Apify/Firecrawl keys to run the live AI features on your own quota. Live failures degrade gracefully back to seeded data.
 
 ### How it's wired
 
 ```
-src/lib/adapters/     PlatformAdapter interface + registry — swap seeded → live per platform
+src/lib/adapters/     PlatformAdapter interface + registry
+                      seeded.ts + LIVE adapters: meta-live, google-live (GAQL REST),
+                      tiktok-live, taboola-live — swapped in per-visitor on connect
+src/lib/connections/  encrypted per-visitor credential store (httpOnly cookie, AES-256-GCM)
 src/lib/data/         deterministic dataset generator (planted stories) + pure aggregation
 src/lib/analyst/      context assembly + prompt + streamed Claude review
-src/lib/intelligence/ Apify ad-library client + Firecrawl + Claude structured analysis
+src/lib/reports/      report templates ported from the client-workspace skills + context
+src/lib/intelligence/ Apify ad-library client (async run + poll) + Firecrawl + Claude analysis
 src/lib/automations/  rules engine → pending actions (tested)
 src/lib/planner/      curve fitting + greedy marginal-ROAS allocation
 src/app/              Next.js App Router pages + API routes
 ```
 
-The four ad platforms are served by a **seeded adapter** behind the same `PlatformAdapter` interface a live integration implements. The demo dataset is generated, not hand-written: a fixed-seed PRNG produces 90 days × 30 campaigns of affiliate-economics data (payout revenue, EPC, CPA) with **planted stories** — a fatiguing Meta UGC creative, a Google campaign under auction pressure, a Taboola winner nobody scaled, a TikTok viral spike that burned out, a weekend-CVR pattern — so the analytics, AI, and automations have real signals to find, and you can verify they find them.
+The four ad platforms are served by a **seeded adapter** behind the same `PlatformAdapter` interface the four live adapters implement — connecting an account swaps implementations without touching a single consumer. The demo dataset is generated, not hand-written: a fixed-seed PRNG produces 90 days × 30 campaigns of affiliate-economics data (payout revenue, EPC, CPA) with **planted stories** — a fatiguing Meta UGC creative, a Google campaign under auction pressure, a Taboola winner nobody scaled, a TikTok viral spike that burned out, a weekend-CVR pattern — so the analytics, AI, and automations have real signals to find, and you can verify they find them.
 
 Everything live (Claude, Apify, Firecrawl) degrades gracefully: no key → clearly-labeled cached/sample output. The demo never white-screens.
 
@@ -56,8 +62,8 @@ I also rebuilt an existing n8n workflow (Apify Meta-ads scraper → AI analysis 
 
 In priority order:
 
-1. **Live platform adapters.** Google Ads first (API + OAuth are the most standardized), then Meta, TikTok, Taboola. The interface already exists; each adapter is a contained integration. Real accounts flow into every module on day one.
-2. **Persistence + multi-user.** Postgres (Drizzle) for scrape history, automation audit logs, approved-action records, and saved plans; auth for the team.
+1. **OAuth-grade platform auth.** The four live adapters exist and work with directly-supplied credentials; the next step is proper OAuth flows (Google/TikTok app review, Meta business verification) so connecting is two clicks instead of pasting tokens, plus MCC/multi-account support.
+2. **Persistence + multi-user.** Postgres (Supabase/Drizzle) for scrape history, report archives, automation audit logs, approved-action records, and saved plans; auth for the team.
 3. **Close the automation loop.** Approved actions actually push: paused status and budget changes via each platform's API, with dry-run mode, change history, and one-click rollback — the same draft-first philosophy, now with teeth.
 4. **Creative pipeline.** Ad Intelligence reproduction prompt → image/video generation → human review → launch as a paused draft in the target account. Research-to-live-test in under an hour.
 5. **Alerting where the team lives.** The signals and automation queue land in Slack with approve/reject buttons; the weekly AI review lands in email every Monday morning.

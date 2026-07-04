@@ -1,22 +1,103 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Research, QueryKind } from "@/lib/intelligence/types";
 import { SAMPLE_RESEARCHES } from "@/lib/intelligence/samples";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import { IconRadar, IconExternal, IconCheck } from "@/components/icons";
+
+interface RunHandle {
+  runId: string;
+  datasetId: string;
+  query: string;
+  kind: QueryKind;
+  country: string;
+}
+
+const RUN_KEY = "mbos-intel-run";
 
 export default function IntelligencePage() {
   const [research, setResearch] = useState<Research>(SAMPLE_RESEARCHES[0]);
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<QueryKind>("keyword");
   const [running, setRunning] = useState(false);
+  const [phase, setPhase] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * The scrape runs server-side on Apify — the browser only polls for the
+   * result, so switching tabs, sleeping the laptop, or even reloading the
+   * page (the run handle is kept in sessionStorage) can't kill a run.
+   */
+  const poll = useCallback(async (handle: RunHandle, attempt = 0) => {
+    if (attempt > 90) {
+      setError("The run is taking unusually long — it may still finish; try again shortly.");
+      setRunning(false);
+      sessionStorage.removeItem(RUN_KEY);
+      return;
+    }
+    try {
+      const params = new URLSearchParams({
+        runId: handle.runId,
+        datasetId: handle.datasetId,
+        query: handle.query,
+        kind: handle.kind,
+        country: handle.country,
+      });
+      const res = await fetch(`/api/intelligence/status?${params}`);
+      const json = await res.json();
+
+      if (json.status === "done") {
+        setResearch(json.research as Research);
+        setRunning(false);
+        setPhase("");
+        sessionStorage.removeItem(RUN_KEY);
+        return;
+      }
+      if (json.status === "failed" || (!res.ok && res.status !== 502)) {
+        setError(json.error ?? "The run failed.");
+        setRunning(false);
+        sessionStorage.removeItem(RUN_KEY);
+        return;
+      }
+      setPhase(
+        json.status === "running"
+          ? "Scraping the Ad Library on Apify — safe to switch tabs…"
+          : "Scrape finished — analyzing creatives with Claude…",
+      );
+      pollTimer.current = setTimeout(() => poll(handle, attempt + 1), 5000);
+    } catch {
+      // transient network blip — keep polling
+      pollTimer.current = setTimeout(() => poll(handle, attempt + 1), 8000);
+    }
+  }, []);
+
+  // Resume an in-flight run after a reload.
+  useEffect(() => {
+    const saved = sessionStorage.getItem(RUN_KEY);
+    if (saved) {
+      try {
+        const handle = JSON.parse(saved) as RunHandle;
+        setQuery(handle.query);
+        setKind(handle.kind);
+        setRunning(true);
+        setPhase("Resuming your run…");
+        poll(handle);
+      } catch {
+        sessionStorage.removeItem(RUN_KEY);
+      }
+    }
+    return () => {
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
+  }, [poll]);
 
   async function runLive() {
     if (query.trim().length < 2 || running) return;
     setRunning(true);
     setError(null);
+    setPhase("Starting the scrape…");
     try {
       const res = await fetch("/api/intelligence", {
         method: "POST",
@@ -26,12 +107,14 @@ export default function IntelligencePage() {
       const json = await res.json();
       if (!res.ok) {
         setError(json.error ?? `Request failed (${res.status})`);
+        setRunning(false);
         return;
       }
-      setResearch(json as Research);
+      const handle = json as RunHandle;
+      sessionStorage.setItem(RUN_KEY, JSON.stringify(handle));
+      poll(handle);
     } catch {
-      setError("Network error running the live pipeline.");
-    } finally {
+      setError("Network error starting the pipeline.");
       setRunning(false);
     }
   }
@@ -116,7 +199,7 @@ export default function IntelligencePage() {
         {running && (
           <div className="mt-3 flex items-center gap-2 text-[13px] text-ink-muted">
             <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            Scraping the Ad Library, reading the landing page, analyzing creatives — 1-3 minutes…
+            {phase || "Working…"} <span className="text-ink-faint">(1-3 min total)</span>
           </div>
         )}
         {error && (

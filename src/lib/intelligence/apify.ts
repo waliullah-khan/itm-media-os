@@ -100,15 +100,23 @@ function normalizeItem(item: ApifyItem, index: number): ScrapedAd | null {
   };
 }
 
-export async function scrapeAdLibrary(
+export interface StartedRun {
+  runId: string;
+  datasetId: string;
+}
+
+/**
+ * Kick off an ad-library scrape asynchronously and return immediately.
+ * The client polls run status — a browser tab switch, reload, or slow actor
+ * can't kill the job (the old run-sync approach died with the connection).
+ */
+export async function startAdLibraryRun(
   query: string,
   kind: QueryKind,
   country: string,
   limit: number,
-): Promise<ScrapedAd[]> {
-  const token = process.env.APIFY_TOKEN;
-  if (!token) throw new Error("APIFY_TOKEN not configured");
-
+  token: string,
+): Promise<StartedRun> {
   const input = {
     startUrls: [{ url: buildStartUrl(query, kind, country) }],
     resultsLimit: limit,
@@ -118,19 +126,45 @@ export async function scrapeAdLibrary(
     includeAboutPage: false,
   };
 
-  const res = await fetch(
-    `https://api.apify.com/v2/acts/${ACTOR}/run-sync-get-dataset-items?token=${token}&timeout=240`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-      signal: AbortSignal.timeout(250_000),
-    },
-  );
-
+  const res = await fetch(`https://api.apify.com/v2/acts/${ACTOR}/runs?token=${token}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+    signal: AbortSignal.timeout(30_000),
+  });
   if (!res.ok) {
-    throw new Error(`Apify run failed: ${res.status} ${await res.text()}`);
+    throw new Error(`Apify run start failed: ${res.status} ${await res.text()}`);
   }
+  const json = (await res.json()) as {
+    data: { id: string; defaultDatasetId: string };
+  };
+  return { runId: json.data.id, datasetId: json.data.defaultDatasetId };
+}
+
+export type RunStatus = "running" | "succeeded" | "failed";
+
+export async function getRunStatus(runId: string, token: string): Promise<RunStatus> {
+  const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`, {
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) throw new Error(`Apify status check failed: ${res.status}`);
+  const json = (await res.json()) as { data: { status: string } };
+  const s = json.data.status;
+  if (s === "SUCCEEDED") return "succeeded";
+  if (["FAILED", "ABORTED", "TIMED-OUT"].includes(s)) return "failed";
+  return "running";
+}
+
+export async function fetchRunItems(
+  datasetId: string,
+  limit: number,
+  token: string,
+): Promise<ScrapedAd[]> {
+  const res = await fetch(
+    `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&clean=true`,
+    { signal: AbortSignal.timeout(60_000) },
+  );
+  if (!res.ok) throw new Error(`Apify dataset fetch failed: ${res.status}`);
 
   const items = (await res.json()) as ApifyItem[];
   const ads = items

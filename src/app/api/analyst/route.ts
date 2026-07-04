@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildAnalystContext } from "@/lib/analyst/context";
 import { ANALYST_SYSTEM } from "@/lib/analyst/prompt";
 import { FALLBACK_ANALYSIS } from "@/lib/analyst/fallback";
+import { getConnections, resolveServiceKeys } from "@/lib/connections/store";
 import { clientKey, rateLimit } from "@/lib/ratelimit";
 
 export const maxDuration = 60;
@@ -21,13 +22,21 @@ export async function POST(req: Request) {
     // no body — defaults are fine
   }
 
-  if (cachedAnalysis && !force) {
+  const connections = await getConnections();
+  const keys = resolveServiceKeys(connections);
+  const hasLiveAccount = Boolean(
+    connections.meta || connections.google || connections.tiktok || connections.taboola,
+  );
+
+  // The process cache only serves the shared seeded world — never a
+  // visitor's connected-account analysis.
+  if (cachedAnalysis && !force && !hasLiveAccount) {
     return new Response(cachedAnalysis, {
       headers: { "content-type": "text/plain; charset=utf-8", "x-analyst-source": "cached" },
     });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!keys.anthropic) {
     return new Response(FALLBACK_ANALYSIS, {
       headers: { "content-type": "text/plain; charset=utf-8", "x-analyst-source": "fallback" },
     });
@@ -45,7 +54,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const client = new Anthropic();
+    const client = new Anthropic({ apiKey: keys.anthropic });
     const context = await buildAnalystContext();
 
     const stream = client.messages.stream({
@@ -70,7 +79,7 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode(delta));
         });
         stream.on("end", () => {
-          cachedAnalysis = full;
+          if (!hasLiveAccount) cachedAnalysis = full;
           controller.close();
         });
         stream.on("error", (err) => controller.error(err));

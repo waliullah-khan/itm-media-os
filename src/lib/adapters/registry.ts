@@ -11,6 +11,9 @@ import type { Platform, PlatformAdapter } from "@/lib/adapters/types";
 import { PLATFORMS } from "@/lib/adapters/types";
 import { createSeededAdapter } from "@/lib/adapters/seeded";
 import { createMetaLiveAdapter } from "@/lib/adapters/meta-live";
+import { createGoogleLiveAdapter } from "@/lib/adapters/google-live";
+import { createTikTokLiveAdapter } from "@/lib/adapters/tiktok-live";
+import { createTaboolaLiveAdapter } from "@/lib/adapters/taboola-live";
 import type { Connections } from "@/lib/connections/store";
 
 const seeded = new Map<Platform, PlatformAdapter>(
@@ -18,8 +21,19 @@ const seeded = new Map<Platform, PlatformAdapter>(
 );
 
 export function getAdapter(platform: Platform, connections: Connections = {}): PlatformAdapter {
-  if (platform === "meta" && connections.meta) {
-    return createMetaLiveAdapter(connections.meta);
+  switch (platform) {
+    case "meta":
+      if (connections.meta) return createMetaLiveAdapter(connections.meta);
+      break;
+    case "google":
+      if (connections.google) return createGoogleLiveAdapter(connections.google);
+      break;
+    case "tiktok":
+      if (connections.tiktok) return createTikTokLiveAdapter(connections.tiktok);
+      break;
+    case "taboola":
+      if (connections.taboola) return createTaboolaLiveAdapter(connections.taboola);
+      break;
   }
   const adapter = seeded.get(platform);
   if (!adapter) throw new Error(`No adapter registered for ${platform}`);

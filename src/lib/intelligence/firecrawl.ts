@@ -4,8 +4,7 @@
  * the creative.
  */
 
-export async function scrapeLandingPage(url: string): Promise<string | null> {
-  const key = process.env.FIRECRAWL_API_KEY;
+export async function scrapeLandingPage(url: string, key?: string): Promise<string | null> {
   if (!key) return null;
 
   try {

@@ -20,8 +20,61 @@ export interface MetaConnection {
   connectedAt: string;
 }
 
+export interface GoogleAdsConnection {
+  developerToken: string;
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  /** 10-digit customer id, no dashes */
+  customerId: string;
+  /** manager (MCC) id when auth runs through one */
+  loginCustomerId?: string;
+  accountName: string;
+  connectedAt: string;
+}
+
+export interface TikTokConnection {
+  accessToken: string;
+  advertiserId: string;
+  accountName: string;
+  connectedAt: string;
+}
+
+export interface TaboolaConnection {
+  clientId: string;
+  clientSecret: string;
+  accountId: string;
+  accountName: string;
+  connectedAt: string;
+}
+
+/** Visitor-supplied service keys — used in place of the deployment's env
+ * keys so anyone can run the live AI/scraping features on their own quota. */
+export interface ServiceKeys {
+  anthropicKey?: string;
+  apifyToken?: string;
+  firecrawlKey?: string;
+}
+
 export interface Connections {
   meta?: MetaConnection;
+  google?: GoogleAdsConnection;
+  tiktok?: TikTokConnection;
+  taboola?: TaboolaConnection;
+  services?: ServiceKeys;
+}
+
+/** Effective service keys: the visitor's own keys win over deployment env. */
+export function resolveServiceKeys(connections: Connections): {
+  anthropic?: string;
+  apify?: string;
+  firecrawl?: string;
+} {
+  return {
+    anthropic: connections.services?.anthropicKey ?? process.env.ANTHROPIC_API_KEY,
+    apify: connections.services?.apifyToken ?? process.env.APIFY_TOKEN,
+    firecrawl: connections.services?.firecrawlKey ?? process.env.FIRECRAWL_API_KEY,
+  };
 }
 
 function key(): Buffer {

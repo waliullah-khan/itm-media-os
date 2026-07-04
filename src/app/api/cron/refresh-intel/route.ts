@@ -1,4 +1,4 @@
-import { scrapeAdLibrary } from "@/lib/intelligence/apify";
+import { fetchRunItems, getRunStatus, startAdLibraryRun } from "@/lib/intelligence/apify";
 
 /**
  * Scheduled ad-library refresh — the native replacement for the n8n
@@ -18,21 +18,40 @@ const WATCHLIST: { query: string; kind: "keyword" | "page" }[] = [
   { query: "GLP-1 weight loss", kind: "keyword" },
 ];
 
+async function runToCompletion(
+  query: string,
+  kind: "keyword" | "page",
+  token: string,
+): Promise<number> {
+  const run = await startAdLibraryRun(query, kind, "US", 5, token);
+  const deadline = Date.now() + 240_000;
+  for (;;) {
+    const status = await getRunStatus(run.runId, token);
+    if (status === "succeeded") break;
+    if (status === "failed") throw new Error("run failed");
+    if (Date.now() > deadline) throw new Error("run timed out");
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
+  const ads = await fetchRunItems(run.datasetId, 5, token);
+  return ads.length;
+}
+
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   const auth = req.headers.get("authorization");
   if (!secret || auth !== `Bearer ${secret}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!process.env.APIFY_TOKEN) {
+  const token = process.env.APIFY_TOKEN;
+  if (!token) {
     return Response.json({ skipped: true, reason: "APIFY_TOKEN not configured" });
   }
 
   const results = [];
   for (const item of WATCHLIST) {
     try {
-      const ads = await scrapeAdLibrary(item.query, item.kind, "US", 5);
-      results.push({ ...item, ok: true, adsFound: ads.length });
+      const adsFound = await runToCompletion(item.query, item.kind, token);
+      results.push({ ...item, ok: true, adsFound });
     } catch (err) {
       results.push({ ...item, ok: false, error: String(err) });
     }
