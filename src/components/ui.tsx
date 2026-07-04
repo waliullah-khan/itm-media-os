@@ -137,11 +137,13 @@ export function StatTile({
   );
 }
 
+/** Categorical series colors — validated for CVD separation + contrast on the
+ * dark surface (dataviz six-checks). Fixed assignment; never cycled. */
 export const PLATFORM_COLORS: Record<string, string> = {
   google: "#4c8df6",
-  meta: "#34d399",
-  taboola: "#fbbf24",
-  tiktok: "#f472b6",
+  meta: "#0da678",
+  taboola: "#cc820a",
+  tiktok: "#ec4899",
 };
 
 export function PlatformDot({ platform }: { platform: string }) {
