@@ -64,16 +64,39 @@ export interface Connections {
   services?: ServiceKeys;
 }
 
-/** Effective service keys: the visitor's own keys win over deployment env. */
-export function resolveServiceKeys(connections: Connections): {
+/**
+ * Effective service keys.
+ *
+ * `allowEnvFallback` controls whether the deployment's own keys may be used
+ * when the visitor hasn't supplied their own:
+ *  - SEEDED board → true: the demo's AI/scraping runs on the deployment keys.
+ *  - LIVE board   → false: a visitor's live-account features run ONLY on the
+ *    visitor's own keys. The deployment keys are never used for live-board
+ *    data, so no one runs live AI/scraping on the owner's quota.
+ *
+ * Defaults to `false` (fail-safe: never leak the deployment keys unless a
+ * caller explicitly opts in for the seeded demo).
+ */
+export function resolveServiceKeys(
+  connections: Connections,
+  { allowEnvFallback = false }: { allowEnvFallback?: boolean } = {},
+): {
   anthropic?: string;
   apify?: string;
   firecrawl?: string;
 } {
+  const v = connections.services;
+  if (allowEnvFallback) {
+    return {
+      anthropic: v?.anthropicKey ?? process.env.ANTHROPIC_API_KEY,
+      apify: v?.apifyToken ?? process.env.APIFY_TOKEN,
+      firecrawl: v?.firecrawlKey ?? process.env.FIRECRAWL_API_KEY,
+    };
+  }
   return {
-    anthropic: connections.services?.anthropicKey ?? process.env.ANTHROPIC_API_KEY,
-    apify: connections.services?.apifyToken ?? process.env.APIFY_TOKEN,
-    firecrawl: connections.services?.firecrawlKey ?? process.env.FIRECRAWL_API_KEY,
+    anthropic: v?.anthropicKey,
+    apify: v?.apifyToken,
+    firecrawl: v?.firecrawlKey,
   };
 }
 

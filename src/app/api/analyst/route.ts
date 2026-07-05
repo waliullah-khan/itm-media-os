@@ -25,8 +25,9 @@ export async function POST(req: Request) {
   }
 
   const { mode, connections } = await getEffectiveConnections();
-  const keys = resolveServiceKeys(connections);
   const isLive = mode === "live";
+  // Live board: only the visitor's own keys — never the deployment's.
+  const keys = resolveServiceKeys(connections, { allowEnvFallback: !isLive });
 
   // Live board with no connected accounts → nothing to analyze.
   if (isLive) {

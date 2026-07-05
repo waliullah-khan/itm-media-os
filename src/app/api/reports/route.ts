@@ -23,7 +23,8 @@ export async function POST(req: Request) {
   if (!template) return new Response("Unknown report template", { status: 404 });
 
   const { mode, connections } = await getEffectiveConnections();
-  const keys = resolveServiceKeys(connections);
+  // Live board: only the visitor's own keys — never the deployment's.
+  const keys = resolveServiceKeys(connections, { allowEnvFallback: mode !== "live" });
 
   if (mode === "live") {
     const world = await getWorld();

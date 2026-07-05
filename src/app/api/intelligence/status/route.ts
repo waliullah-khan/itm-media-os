@@ -29,7 +29,11 @@ export async function GET(req: Request) {
   const done = completed.get(runId) ?? (await getResearchByRunId(runId));
   if (done) return Response.json({ status: "done", research: done });
 
-  const keys = resolveServiceKeys((await getEffectiveConnections()).connections);
+  const eff = await getEffectiveConnections();
+  // Live board: only the visitor's own keys — never the deployment's.
+  const keys = resolveServiceKeys(eff.connections, {
+    allowEnvFallback: eff.mode !== "live",
+  });
   if (!keys.apify || !keys.anthropic) {
     return Response.json({ error: "Keys no longer available" }, { status: 503 });
   }

@@ -14,7 +14,11 @@ const MAX_ADS = 8;
  * Apify's side, so closing or backgrounding the tab can't kill it.
  */
 export async function POST(req: Request) {
-  const keys = resolveServiceKeys((await getEffectiveConnections()).connections);
+  const eff = await getEffectiveConnections();
+  // Live board: only the visitor's own keys — never the deployment's.
+  const keys = resolveServiceKeys(eff.connections, {
+    allowEnvFallback: eff.mode !== "live",
+  });
   if (!keys.apify || !keys.anthropic) {
     return Response.json(
       {
