@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Research, QueryKind } from "@/lib/intelligence/types";
 import { SAMPLE_RESEARCHES } from "@/lib/intelligence/samples";
-import { Badge, Card, PageHeader } from "@/components/ui";
+import { Badge, PageHeader } from "@/components/ui";
 import { IconRadar, IconExternal, IconCheck } from "@/components/icons";
 
 interface RunHandle {
@@ -176,8 +176,8 @@ export default function IntelligencePage() {
         }
       />
 
-      {/* Search bar */}
-      <Card className="mb-4">
+      {/* Search bar — ruled toolbar, no card box */}
+      <div className="mb-6 border-b border-line pb-5">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-md border border-line bg-surface-2 p-0.5">
             {(
@@ -269,7 +269,7 @@ export default function IntelligencePage() {
             {error}
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Research header */}
       <div className="mb-3 flex flex-wrap items-baseline gap-2">
@@ -281,30 +281,36 @@ export default function IntelligencePage() {
         </span>
       </div>
 
-      {/* Patterns + recommendations */}
-      <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <Card title="Patterns across these ads">
-          <ul className="space-y-2">
+      {/* Patterns + recommendations — ruled sections, no card boxes */}
+      <div className="mb-8 grid gap-x-8 gap-y-8 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            Patterns across these ads
+          </h2>
+          <ul className="divide-y divide-line border-t border-line-strong">
             {research.patterns.map((p, i) => (
-              <li key={i} className="flex gap-2 text-[13px] leading-relaxed">
-                <span className="mt-[8px] h-1 w-1 shrink-0 rounded-full bg-accent" />
+              <li key={i} className="flex gap-2.5 py-2.5 text-[13px] leading-relaxed">
+                <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
                 {p}
               </li>
             ))}
           </ul>
-        </Card>
-        <Card title="What your team should do">
-          <ul className="space-y-2">
+        </section>
+        <section>
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            What your team should do
+          </h2>
+          <ul className="divide-y divide-line border-t border-line-strong">
             {research.recommendations.map((r, i) => (
-              <li key={i} className="flex gap-2 text-[13px] leading-relaxed">
+              <li key={i} className="flex gap-2.5 py-2.5 text-[13px] leading-relaxed">
                 <IconCheck size={14} className="mt-0.5 shrink-0 text-pos" />
                 {r}
               </li>
             ))}
           </ul>
           {research.landingPageNotes && (
-            <div className="mt-3 rounded-md border border-line bg-surface-2/50 p-3">
-              <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-ink-faint">
+            <div className="mt-4 border-l-2 border-line-strong pl-3">
+              <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.07em] text-ink-faint">
                 Landing page funnel (via Firecrawl)
               </div>
               <p className="text-[12.5px] leading-relaxed text-ink-muted">
@@ -312,7 +318,7 @@ export default function IntelligencePage() {
               </p>
             </div>
           )}
-        </Card>
+        </section>
       </div>
 
       {/* Ad cards */}
@@ -320,21 +326,10 @@ export default function IntelligencePage() {
         {research.ads.map((ad) => {
           const a = research.analyses.find((x) => x.adId === ad.id);
           return (
-            <Card key={ad.id} className="flex flex-col">
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-[14px] font-semibold">{ad.pageName}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-faint">
-                    {ad.startedRunning && <span>running since {ad.startedRunning}</span>}
-                    {ad.platforms.length > 0 && <span>· {ad.platforms.join(", ")}</span>}
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-1.5">
-                  {ad.mediaKind && <Badge tone="neutral">{ad.mediaKind}</Badge>}
-                  {ad.ctaType && <Badge tone="demo">{ad.ctaType.replace(/_/g, " ").toLowerCase()}</Badge>}
-                </div>
-              </div>
-
+            <article
+              key={ad.id}
+              className="flex flex-col overflow-hidden rounded-lg border border-line bg-surface"
+            >
               {ad.mediaUrl && ad.mediaKind === "image" && (
                 // FB CDN URLs are short-lived and arbitrary-host — plain img is correct here
                 // eslint-disable-next-line @next/next/no-img-element
@@ -342,45 +337,64 @@ export default function IntelligencePage() {
                   src={ad.mediaUrl}
                   alt={`${ad.pageName} ad creative`}
                   referrerPolicy="no-referrer"
-                  className="mb-2 max-h-56 w-full rounded-md border border-line object-cover"
+                  className="max-h-56 w-full border-b border-line object-cover"
                 />
               )}
-
-              {ad.body && (
-                <p className="mb-3 rounded-md border border-line bg-surface-2/40 p-2.5 text-[12.5px] leading-relaxed text-ink/85">
-                  {ad.body.length > 280 ? `${ad.body.slice(0, 280)}…` : ad.body}
-                </p>
-              )}
-
-              {a && (
-                <div className="mt-auto space-y-2.5">
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge tone="cached">{a.angle}</Badge>
-                    <Badge tone="neutral">{a.format}</Badge>
-                    <Badge tone="neutral">{a.emotion}</Badge>
+              <div className="flex flex-1 flex-col p-4">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-[14px] font-semibold">{ad.pageName}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-ink-faint">
+                      {ad.startedRunning && <span>running since {ad.startedRunning}</span>}
+                      {ad.platforms.length > 0 && <span>· {ad.platforms.join(", ")}</span>}
+                    </div>
                   </div>
-                  <div className="text-[12.5px] leading-relaxed">
-                    <span className="font-medium text-ink-muted">Hook: </span>
-                    {a.hook}
+                  <div className="flex shrink-0 gap-1.5">
+                    {ad.mediaKind && <Badge tone="neutral">{ad.mediaKind}</Badge>}
+                    {ad.ctaType && (
+                      <Badge tone="demo">
+                        {ad.ctaType.replace(/_/g, " ").toLowerCase()}
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-[12.5px] leading-relaxed text-ink-muted">
-                    {a.whyItWorks}
-                  </div>
-                  <ReproductionPrompt text={a.reproductionPrompt} />
                 </div>
-              )}
 
-              {ad.landingUrl && (
-                <a
-                  href={ad.landingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2.5 inline-flex items-center gap-1 text-[12px] text-primary hover:underline"
-                >
-                  landing page <IconExternal size={12} />
-                </a>
-              )}
-            </Card>
+                {ad.body && (
+                  <p className="mb-3 border-l-2 border-line pl-3 text-[12.5px] leading-relaxed text-ink/85">
+                    {ad.body.length > 280 ? `${ad.body.slice(0, 280)}…` : ad.body}
+                  </p>
+                )}
+
+                {a && (
+                  <div className="mt-auto space-y-2.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge tone="cached">{a.angle}</Badge>
+                      <Badge tone="neutral">{a.format}</Badge>
+                      <Badge tone="neutral">{a.emotion}</Badge>
+                    </div>
+                    <div className="text-[12.5px] leading-relaxed">
+                      <span className="font-medium text-ink-muted">Hook: </span>
+                      {a.hook}
+                    </div>
+                    <div className="text-[12.5px] leading-relaxed text-ink-muted">
+                      {a.whyItWorks}
+                    </div>
+                    <ReproductionPrompt text={a.reproductionPrompt} />
+                  </div>
+                )}
+
+                {ad.landingUrl && (
+                  <a
+                    href={ad.landingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2.5 inline-flex items-center gap-1 text-[12px] text-primary hover:underline"
+                  >
+                    landing page <IconExternal size={12} />
+                  </a>
+                )}
+              </div>
+            </article>
           );
         })}
       </div>

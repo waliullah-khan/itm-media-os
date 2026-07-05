@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Badge, Card } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { Markdown } from "@/components/markdown";
 import { IconSparkles } from "@/components/icons";
 import { PLATFORM_LABELS } from "@/lib/adapters/types";
@@ -69,48 +69,62 @@ export function ReportsClient({ templates }: { templates: TemplateCard[] }) {
   return (
     <>
       {[...bySource.entries()].map(([source, list]) => (
-        <div key={source} className="mb-5">
-          <h2 className="mb-2.5 text-[13px] font-medium text-ink-muted">
+        <section key={source} className="mb-8">
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
             Ported from the {source}
           </h2>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {list.map((t) => (
-              <Card key={t.id} className="flex flex-col">
-                <div className="mb-1 flex items-start justify-between gap-2">
-                  <span className="text-[13.5px] font-semibold leading-snug">{t.name}</span>
-                  {t.platform && (
-                    <Badge tone="neutral">
-                      {PLATFORM_LABELS[t.platform as keyof typeof PLATFORM_LABELS]}
-                    </Badge>
-                  )}
-                </div>
-                <p className="mb-3 flex-1 text-[12.5px] leading-relaxed text-ink-muted">
-                  {t.description}
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <code className="truncate text-[10.5px] text-ink-faint">{t.sourceSkill}</code>
+          <ul className="divide-y divide-line border-t border-line-strong">
+            {list.map((t) => {
+              const isRunning = running && activeId === t.id;
+              return (
+                <li
+                  key={t.id}
+                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6"
+                >
+                  <div className="min-w-0 max-w-2xl">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[14px] font-semibold">{t.name}</span>
+                      {t.platform && (
+                        <Badge tone="neutral">
+                          {PLATFORM_LABELS[t.platform as keyof typeof PLATFORM_LABELS]}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
+                      {t.description}
+                    </p>
+                    <code className="mt-1.5 block truncate font-mono text-[10.5px] text-ink-faint">
+                      {t.sourceSkill}
+                    </code>
+                  </div>
                   <button
                     onClick={() => run(t.id)}
                     disabled={running}
-                    className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 text-[12.5px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
+                    className="flex min-h-9 shrink-0 cursor-pointer items-center gap-1.5 self-start rounded-md bg-primary px-4 text-[12.5px] font-medium text-white transition hover:bg-primary-hover active:translate-y-px disabled:opacity-40"
                   >
                     <IconSparkles size={13} />
-                    {running && activeId === t.id ? "Writing…" : "Run"}
+                    {isRunning ? "Writing…" : "Run"}
                   </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ))}
 
       <div ref={outputRef}>
         {(text || running || error) && active && (
-          <Card
-            title={`${active.name}`}
-            right={running ? <Badge tone="demo">writing…</Badge> : <Badge tone="live">done</Badge>}
-            className="mt-2"
-          >
+          <section className="mt-2">
+            <div className="mb-4 flex items-center justify-between gap-2 border-b border-line-strong pb-2.5">
+              <h2 className="font-display text-[17px] font-medium tracking-tight">
+                {active.name}
+              </h2>
+              {running ? (
+                <Badge tone="demo">writing…</Badge>
+              ) : (
+                <Badge tone="live">done</Badge>
+              )}
+            </div>
             {error && (
               <div className="mb-3 rounded-md border border-neg/30 bg-neg/5 p-2.5 text-[13px] text-neg">
                 {error}
@@ -126,7 +140,7 @@ export function ReportsClient({ templates }: { templates: TemplateCard[] }) {
             {running && text && (
               <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-primary align-text-bottom" />
             )}
-          </Card>
+          </section>
         )}
       </div>
     </>

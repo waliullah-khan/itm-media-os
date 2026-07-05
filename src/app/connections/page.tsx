@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PLATFORM_LABELS, PLATFORMS, type Platform } from "@/lib/adapters/types";
 import { getConnections } from "@/lib/connections/store";
 import { getMode } from "@/lib/connections/mode";
-import { Badge, Card, PageHeader, PlatformDot } from "@/components/ui";
+import { Badge, PageHeader, PlatformDot } from "@/components/ui";
 import { IconPlug } from "@/components/icons";
 import { PlatformConnect, ServiceKeysForm } from "./connect-forms";
 
@@ -19,26 +19,26 @@ const PLATFORM_NOTES: Record<Platform, string> = {
     "Live adapter reads the integrated report (campaign + ad level) from the Marketing API. You need an access token and the numeric advertiser ID.",
 };
 
+/** `byok` services must be supplied by the visitor to work on the live board —
+ * the deployment's own keys are never used for live-board data. */
 const SERVICES = [
   {
     name: "Anthropic (Claude)",
     envVar: "ANTHROPIC_API_KEY",
+    byok: true,
     role: "AI Analyst weekly reviews · report generation · creative analysis + reproduction prompts",
   },
   {
     name: "Apify",
     envVar: "APIFY_TOKEN",
-    role: "Meta Ad Library scraping — the same actor the team's n8n workflow used, now called natively",
+    byok: true,
+    role: "Ad Library scraping in Ad Intelligence",
   },
   {
     name: "Firecrawl",
     envVar: "FIRECRAWL_API_KEY",
+    byok: true,
     role: "Competitor landing-page scraping for funnel notes in Ad Intelligence",
-  },
-  {
-    name: "Vercel Cron",
-    envVar: "CRON_SECRET",
-    role: "Weekly scheduled ad-library refresh (/api/cron/refresh-intel) — replaces the n8n schedule trigger",
   },
 ];
 
@@ -93,75 +93,89 @@ export default async function ConnectionsPage() {
         actions={<Badge tone="live">live board</Badge>}
       />
 
-      <h2 className="mb-3 text-[13px] font-medium text-ink-muted">
-        Ad platforms — connect your accounts
-      </h2>
-      <div className="grid gap-4 md:grid-cols-2">
-        {PLATFORMS.map((p) => {
-          const conn = connections[p];
-          return (
-            <Card key={p}>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-[14px] font-semibold">
-                  <PlatformDot platform={p} />
-                  {PLATFORM_LABELS[p]}
-                </span>
-                {conn ? (
-                  <Badge tone="live">live account connected</Badge>
-                ) : (
-                  <Badge tone="demo">seeded demo data</Badge>
-                )}
-              </div>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-muted">
-                {PLATFORM_NOTES[p]}
-              </p>
-              <PlatformConnect
-                platform={p}
-                label={PLATFORM_LABELS[p]}
-                connected={conn ? { accountName: conn.accountName } : null}
-              />
-              <p className="mt-2.5 text-[11.5px] text-ink-faint">
-                adapter:{" "}
-                <code className="rounded bg-surface-2 px-1 py-0.5">
-                  src/lib/adapters/{p === "meta" ? "meta" : p}-live.ts
-                </code>{" "}
-                · falls back to seeded data if the live pull fails
-              </p>
-            </Card>
-          );
-        })}
-      </div>
+      <section className="mb-10">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+          Ad platforms — connect your accounts
+        </h2>
+        <ul className="divide-y divide-line border-t border-line-strong">
+          {PLATFORMS.map((p) => {
+            const conn = connections[p];
+            return (
+              <li key={p} className="py-5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2 text-[14px] font-semibold">
+                    <PlatformDot platform={p} />
+                    {PLATFORM_LABELS[p]}
+                  </span>
+                  {conn ? (
+                    <Badge tone="live">live account connected</Badge>
+                  ) : (
+                    <Badge tone="demo">seeded demo data</Badge>
+                  )}
+                </div>
+                <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
+                  {PLATFORM_NOTES[p]}
+                </p>
+                <PlatformConnect
+                  platform={p}
+                  label={PLATFORM_LABELS[p]}
+                  connected={conn ? { accountName: conn.accountName } : null}
+                />
+                <p className="mt-2.5 text-[11.5px] text-ink-faint">
+                  adapter:{" "}
+                  <code className="rounded bg-surface-2 px-1 py-0.5 font-mono">
+                    src/lib/adapters/{p === "meta" ? "meta" : p}-live.ts
+                  </code>{" "}
+                  · reads your account via the platform&apos;s own API
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-      <h2 className="mb-3 mt-8 text-[13px] font-medium text-ink-muted">Live services</h2>
-      <ServiceKeysForm hasVisitorKeys={hasVisitorKeys} />
-      <div className="grid gap-4 md:grid-cols-2">
-        {SERVICES.map((s) => {
-          const visitorHas =
-            (s.envVar === "ANTHROPIC_API_KEY" && connections.services?.anthropicKey) ||
-            (s.envVar === "APIFY_TOKEN" && connections.services?.apifyToken) ||
-            (s.envVar === "FIRECRAWL_API_KEY" && connections.services?.firecrawlKey);
-          const envHas = Boolean(process.env[s.envVar]);
-          return (
-            <Card key={s.name}>
-              <div className="flex items-center justify-between">
-                <span className="text-[14px] font-semibold">{s.name}</span>
-                {visitorHas ? (
-                  <Badge tone="live">your key</Badge>
-                ) : envHas ? (
-                  <Badge tone="live">connected</Badge>
-                ) : (
-                  <Badge tone="neutral">not configured</Badge>
-                )}
-              </div>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-ink-muted">{s.role}</p>
-              <p className="mt-2 text-[11.5px] text-ink-faint">
-                env: <code className="rounded bg-surface-2 px-1 py-0.5">{s.envVar}</code>
-                {!envHas && !visitorHas && " — or add your own key above"}
-              </p>
-            </Card>
-          );
-        })}
-      </div>
+      <section>
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+          Live services — your keys
+        </h2>
+        <p className="mb-3 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
+          On the live board, the AI Analyst, Reports, and Ad Intelligence run on{" "}
+          <strong>your own</strong> Anthropic, Apify, and Firecrawl keys — the
+          deployment&apos;s keys are never used for live-board data. Add them below (each
+          is validated, then stored only in your encrypted cookie). Prefer to try the
+          features first? The <strong>Seeded demo</strong> board runs them for you with no
+          keys required.
+        </p>
+        <ServiceKeysForm hasVisitorKeys={hasVisitorKeys} />
+        <ul className="divide-y divide-line border-t border-line-strong">
+          {SERVICES.map((s) => {
+            const visitorHas =
+              (s.envVar === "ANTHROPIC_API_KEY" && connections.services?.anthropicKey) ||
+              (s.envVar === "APIFY_TOKEN" && connections.services?.apifyToken) ||
+              (s.envVar === "FIRECRAWL_API_KEY" && connections.services?.firecrawlKey);
+            return (
+              <li key={s.name} className="py-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[14px] font-semibold">{s.name}</span>
+                  {visitorHas ? (
+                    <Badge tone="live">your key active</Badge>
+                  ) : (
+                    <Badge tone="neutral">add your key</Badge>
+                  )}
+                </div>
+                <p className="mt-2 max-w-2xl text-[12.5px] leading-relaxed text-ink-muted">
+                  {s.role}
+                </p>
+                <p className="mt-2 text-[11.5px] text-ink-faint">
+                  {visitorHas
+                    ? "Using your key for live-board requests."
+                    : "Add your key above to use this on the live board."}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </>
   );
 }

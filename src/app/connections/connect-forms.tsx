@@ -198,7 +198,7 @@ export function ServiceKeysForm({ hasVisitorKeys }: { hasVisitorKeys: boolean })
   }
 
   return (
-    <div className="mb-4 rounded-lg border border-line bg-surface p-4">
+    <div className="mb-5 rounded-md border border-line bg-surface-2/40 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <span className="text-[14px] font-semibold">Use your own service keys</span>

@@ -13,7 +13,6 @@ import { PLATFORM_LABELS, type Platform } from "@/lib/adapters/types";
 import { TrendChart } from "@/components/charts";
 import {
   Badge,
-  Card,
   PageHeader,
   PlatformDot,
   Scorecard,
@@ -114,19 +113,25 @@ export default async function CommandCenter() {
         />
       </Scorecard>
 
-      {/* Trend + anomalies */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <Card title="Spend vs revenue — 90 days" className="lg:col-span-2">
+      {/* Trend + signals — ruled sections, no card boxes */}
+      <div className="mt-8 grid gap-x-8 gap-y-8 lg:grid-cols-3">
+        <section className="lg:col-span-2">
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            Spend vs revenue — 90 days
+          </h2>
           <TrendChart data={series} />
-        </Card>
+        </section>
 
-        <Card title="Signals" className="lg:col-span-1">
-          <ul className="space-y-2.5">
+        <section className="lg:col-span-1">
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            Signals
+          </h2>
+          <ul className="divide-y divide-line border-t border-line-strong">
             {anomalies.map((a) => (
               <li key={`${a.kind}-${a.campaignId}`}>
                 <Link
                   href={`/campaigns/${a.campaignId}`}
-                  className="group flex gap-2.5 rounded-md border border-line bg-surface-2/40 p-2.5 transition-colors hover:border-primary/40"
+                  className="group -mx-2 flex gap-2.5 rounded-md px-2 py-2.5 transition-colors hover:bg-surface-2/50"
                 >
                   <IconAlert
                     size={15}
@@ -151,7 +156,7 @@ export default async function CommandCenter() {
               </li>
             ))}
           </ul>
-        </Card>
+        </section>
       </div>
 
       {/* Platform breakdown — full-width ruled ledger, no card box */}
@@ -222,14 +227,17 @@ export default async function CommandCenter() {
         </div>
       </section>
 
-      {/* Top / bottom campaigns */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      {/* Top / bottom campaigns — ruled sections, no card boxes */}
+      <div className="mt-8 grid gap-x-8 gap-y-8 lg:grid-cols-2">
         {[
           { title: "Top campaigns by profit — 30d", rows: top5 },
           { title: "Bottom campaigns by profit — 30d", rows: bottom5 },
         ].map(({ title, rows }) => (
-          <Card key={title} title={title}>
-            <ul className="divide-y divide-line">
+          <section key={title}>
+            <h2 className="mb-3 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+              {title}
+            </h2>
+            <ul className="divide-y divide-line border-t border-line-strong">
               {rows.map(({ campaignId, totals }) => {
                 const c = campaignById.get(campaignId);
                 if (!c) return null;
@@ -237,17 +245,17 @@ export default async function CommandCenter() {
                   <li key={campaignId}>
                     <Link
                       href={`/campaigns/${campaignId}`}
-                      className="flex items-center gap-3 py-2 transition-colors hover:bg-surface-2/40"
+                      className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-surface-2/50"
                     >
                       <PlatformDot platform={c.platform} />
                       <span className="min-w-0 flex-1 truncate text-[13px]">
                         {c.name}
                       </span>
-                      <span className="tnum text-[12px] text-ink-muted">
+                      <span className="tnum font-mono text-[12px] text-ink-muted">
                         {fmtRoas(totals.roas)}
                       </span>
                       <span
-                        className={`tnum w-20 text-right text-[13px] font-medium ${
+                        className={`tnum w-20 text-right font-mono text-[13px] font-medium ${
                           totals.profit >= 0 ? "text-pos" : "text-neg"
                         }`}
                       >
@@ -258,7 +266,7 @@ export default async function CommandCenter() {
                 );
               })}
             </ul>
-          </Card>
+          </section>
         ))}
       </div>
     </>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { PendingAction, Rule } from "@/lib/automations/rules";
 import { PLATFORM_LABELS, PLATFORMS, type Platform } from "@/lib/adapters/types";
-import { Badge, Card, PlatformDot } from "@/components/ui";
+import { Badge, PlatformDot } from "@/components/ui";
 import { IconCheck, IconX, IconZap } from "@/components/icons";
 import { fmtUsd } from "@/lib/format";
 
@@ -39,12 +39,13 @@ export function AutomationsClient({
   const decided = initialPending.filter((a) => decisions[keyOf(a)]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid gap-x-8 gap-y-8 lg:grid-cols-3">
       {/* Pending queue */}
-      <div className="space-y-4 lg:col-span-2">
-        <Card
-          title={`Pending actions — human approval required (${undecided.length})`}
-        >
+      <div className="space-y-8 lg:col-span-2">
+        <section>
+          <h2 className="mb-4 border-b border-line-strong pb-2.5 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            Pending actions — human approval required ({undecided.length})
+          </h2>
           {undecided.length === 0 ? (
             <p className="py-6 text-center text-[13px] text-ink-muted">
               Queue clear — every triggered action has been reviewed.
@@ -100,10 +101,13 @@ export function AutomationsClient({
               ))}
             </ul>
           )}
-        </Card>
+        </section>
 
         {decided.length > 0 && (
-          <Card title="Reviewed this session">
+          <section>
+            <h2 className="mb-4 border-b border-line-strong pb-2.5 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+              Reviewed this session
+            </h2>
             <ul className="divide-y divide-line">
               {decided.map((a) => (
                 <li key={keyOf(a)} className="flex items-center gap-3 py-2.5">
@@ -133,13 +137,16 @@ export function AutomationsClient({
               (paused status / budget change) with a full audit trail. The demo stops at
               the approval — by design.
             </p>
-          </Card>
+          </section>
         )}
 
         {/* Rule builder */}
         <RuleBuilder onResult={setCustomActions} />
         {customActions && (
-          <Card title={`Custom rule matches (${customActions.length})`}>
+          <section>
+            <h2 className="mb-4 border-b border-line-strong pb-2.5 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+              Custom rule matches ({customActions.length})
+            </h2>
             {customActions.length === 0 ? (
               <p className="py-3 text-[13px] text-ink-muted">
                 No active campaign currently trips that rule. Loosen the threshold or widen the window.
@@ -158,16 +165,19 @@ export function AutomationsClient({
                 ))}
               </ul>
             )}
-          </Card>
+          </section>
         )}
       </div>
 
       {/* Active rules */}
-      <div>
-        <Card title={`Active rules (${rules.length})`}>
-          <ul className="space-y-3">
+      <div className="lg:border-l lg:border-line lg:pl-8">
+        <section>
+          <h2 className="mb-4 border-b border-line-strong pb-2.5 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+            Active rules ({rules.length})
+          </h2>
+          <ul className="divide-y divide-line">
             {rules.map((r) => (
-              <li key={r.id} className="rounded-md border border-line bg-surface-2/40 p-3">
+              <li key={r.id} className="py-3.5 first:pt-0">
                 <div className="flex items-center gap-2">
                   <IconZap size={14} className="text-accent" />
                   <span className="text-[13px] font-medium">{r.name}</span>
@@ -185,7 +195,7 @@ export function AutomationsClient({
               </li>
             ))}
           </ul>
-        </Card>
+        </section>
       </div>
     </div>
   );
@@ -226,7 +236,10 @@ function RuleBuilder({ onResult }: { onResult: (a: PendingAction[]) => void }) {
     "min-h-9 cursor-pointer rounded-md border border-line bg-surface-2 px-2 text-[13px] focus:border-primary focus:outline-none";
 
   return (
-    <Card title="Build a rule — evaluated instantly against the account">
+    <section>
+      <h2 className="mb-4 border-b border-line-strong pb-2.5 text-[11px] font-medium uppercase tracking-[0.09em] text-ink-faint">
+        Build a rule — evaluated instantly against the account
+      </h2>
       <div className="flex flex-wrap items-center gap-2 text-[13px]">
         <span className="text-ink-muted">When</span>
         <select value={metric} onChange={(e) => setMetric(e.target.value)} className={selectCls} aria-label="Metric">
@@ -277,6 +290,6 @@ function RuleBuilder({ onResult }: { onResult: (a: PendingAction[]) => void }) {
       <p className="mt-2 text-[11.5px] text-ink-faint">
         CTR/CVR thresholds are decimals (0.02 = 2%). Campaigns under $200 window spend are ignored as noise.
       </p>
-    </Card>
+    </section>
   );
 }
