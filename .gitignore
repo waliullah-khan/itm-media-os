@@ -43,3 +43,7 @@ next-env.d.ts
 .vercel
 .env*
 worker/node_modules
+
+# local video-production artifacts (the tour lives on YouTube, not in the app)
+/videos/
+/wali-sdf.wav

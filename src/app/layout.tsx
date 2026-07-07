@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 import { Sidebar, MobileNav } from "@/components/sidebar";
 import { ModeSwitch } from "@/components/topbar";
+import { IntroVideoModal } from "@/components/intro-video-modal";
 import { getMode, countPlatformConnections } from "@/lib/connections/mode";
 import { getConnections } from "@/lib/connections/store";
 
@@ -70,6 +71,7 @@ export default async function RootLayout({
           </div>
         </div>
         <MobileNav />
+        <IntroVideoModal />
       </body>
     </html>
   );
